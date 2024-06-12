@@ -1,0 +1,42 @@
+{
+	"info": {
+		"_postman_id": "da360105-a5f3-42c6-815a-e03c3121f695",
+		"name": "bitespeed",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "16700448",
+		"_collection_link": "https://gold-firefly-641617.postman.co/workspace/Team-Workspace~b3b01dbe-3d26-422e-89f7-e10c321c278e/collection/16700448-da360105-a5f3-42c6-815a-e03c3121f695?action=share&creator=16700448&source=collection_link"
+	},
+	"item": [
+		{
+			"name": "Identify Request",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"blake@hillvalley.edu\",\n    \"phoneNumber\": \"1234145\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://brainy-bell-bottoms-ray.cyclic.app/api/v1/identify",
+					"protocol": "https",
+					"host": [
+						"brainy-bell-bottoms-ray",
+						"cyclic",
+						"app"
+					],
+					"path": [
+						"api",
+						"v1",
+						"identify"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
