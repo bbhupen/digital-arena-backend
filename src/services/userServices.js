@@ -20,11 +20,11 @@ const loginService = async (payload) => {
     }
 
     const accessToken = jwt.sign({ username: username }, secretKey, { expiresIn: '1h' });
-    const refreshToken = jwt.sign({ username: username }, secretKey);
+    const refresh_token = jwt.sign({ username: username }, secretKey);
 
     const data = {
         "username": username,
-        "refreshToken": refreshToken
+        "refresh_token": refresh_token
     }
 
     const insertRes = await insertRefreshToken(data);
@@ -40,13 +40,13 @@ const loginService = async (payload) => {
         "status": "success",
         "isAuthenticated": isAuthenticated,
         "accessToken": accessToken,
-        "refreshToken": refreshToken
+        "refresh_token": refresh_token
     }
 }
 
 const refreshAccessToken = async (payload) => {
 
-    const mandateKeys = ["refreshToken", "username"];
+    const mandateKeys = ["refresh_token", "username"];
     const hasRequiredFields = mandateKeys.every(prop => payload.hasOwnProperty(prop));
     if (!hasRequiredFields) {
         return {
@@ -65,12 +65,12 @@ const refreshAccessToken = async (payload) => {
 
 
     const accessToken = jwt.sign({ username: payload["username"] }, secretKey, { expiresIn: '1h' });
-    const refreshToken = jwt.sign({ username: payload["username"] }, secretKey);
+    const refresh_token = jwt.sign({ username: payload["username"] }, secretKey);
 
 
     const data = {
         "username": payload["username"],
-        "refreshToken": refreshToken
+        "refresh_token": refresh_token
     }
 
     const insertRes = await insertRefreshToken(data);
@@ -86,7 +86,7 @@ const refreshAccessToken = async (payload) => {
     return {
         "status": "success",
         "accessToken": accessToken,
-        "refreshToken": refreshToken
+        "refresh_token": refresh_token
     }
 }
 

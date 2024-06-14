@@ -8,15 +8,15 @@ const selectPasswordUsingUsername = async (data) => {
 }
 
 const selectRefreshTokenUsingUsername = async (data) => {
-    const usersQuery = `SELECT refreshToken FROM ${userTableName} WHERE username = ? and refreshToken = ?`;
-    const usersResults = await executeQuery(usersQuery, [data["username"], data["refreshToken"]]);
+    const usersQuery = `SELECT refresh_token FROM ${userTableName} WHERE username = ? and refresh_token = ?`;
+    const usersResults = await executeQuery(usersQuery, [data["username"], data["refresh_token"]]);
     return usersResults;
 }
 
 
 const insertRefreshToken = async (data) => {
-    const usersQuery = `update ${userTableName} set refreshToken = ? WHERE username = ?`;
-    const usersResults = await executeQuery(usersQuery, [data["refreshToken"], data["username"]]);
+    const usersQuery = `update ${userTableName} set refresh_token = ? WHERE username = ?`;
+    const usersResults = await executeQuery(usersQuery, [data["refresh_token"], data["username"]]);
     return usersResults;
 }
 
