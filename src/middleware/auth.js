@@ -1,9 +1,14 @@
 const jwt = require('jsonwebtoken');
-
+const secretKey = process.env.JWT_SECRET;
 
 const verifyAccessToken = (req, res, next) => {
     const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!authHeader) {
+        return res.status(401).json({ error: 'Authorization header not found' });
+    }
+
+    const token = authHeader.split(' ')[1];
 
     if (!token) {
         return res.status(401).json({ error: 'Access token not found' });
@@ -20,4 +25,4 @@ const verifyAccessToken = (req, res, next) => {
 
 module.exports = {
     verifyAccessToken
-}
+};

@@ -1,93 +1,99 @@
-const { selectPasswordUsingUsername, insertRefreshToken, selectRefreshTokenUsingUsername } = require("../data_access/userRepo");
+const { selectUserUsingUsername, insertRefreshToken, selectRefreshTokenUsingUsernameToken, selectRefreshTokenUsingUsername } = require("../data_access/userRepo");
 const { toMD5 } = require("../helpers/utils");
 const jwt = require('jsonwebtoken');
+const ApiResponse = require("../helpers/apiresponse");
 
 const secretKey = process.env.JWT_SECRET;
 
 const loginService = async (payload) => {
+    let refreshToken = "";
+    const mandateKeys = ["username", "password"];
+    const hasRequiredFields = mandateKeys.every(prop => payload.hasOwnProperty(prop));
+    if (!hasRequiredFields) {
+        return ApiResponse.response("failure", "req.body does not have valid parameters")
+    }
 
-    const { username, password } = payload
+    const { username, password } = payload;
+
+    if (username.trim().length === 0 && password.trim().length === 0) {
+        return ApiResponse.response("failure", "Please provide valid parameters")
+    }
+
     const inputPassword = await toMD5(password);
-    const userPassword = await selectPasswordUsingUsername(payload);
+    const user = await selectUserUsingUsername(payload);
 
-    const isAuthenticated = inputPassword === userPassword[0]['password'];
+    const isAuthenticated = inputPassword === user[0]['password'];
 
     if (!isAuthenticated) {
-        return ({ 
-            "status": "failure",
-            "data": "Password or username incorrect",
-         });
+        return ApiResponse.response("failure", "invalid password or username")
     }
 
-    const accessToken = jwt.sign({ username: username }, secretKey, { expiresIn: '1h' });
-    const refresh_token = jwt.sign({ username: username }, secretKey);
+    
+    const accessToken = jwt.sign({ username: username, role_id: user[0]['role_id'], location_id: user[0]['location'] }, secretKey, { expiresIn: '1h' });
+    const savedToken = await selectRefreshTokenUsingUsername(payload);
 
-    const data = {
-        "username": username,
-        "refresh_token": refresh_token
+    if (!savedToken.length){
+        refreshToken = jwt.sign({ username: username, role_id: user[0]['role_id'], location_id: user[0]['location'] }, secretKey);
+
+        const data = {
+            "username": username,
+            "refreshToken": refreshToken
+        }
+    
+        const insertRes = await insertRefreshToken(data);
+
+        if (insertRes == "error"){
+            return ApiResponse.response("failure", "some error occurred");
+        }
+
     }
-
-    const insertRes = await insertRefreshToken(data);
-
-    if (insertRes == "error"){
-        return ({ 
-            "status": "failure",
-            "data": "Some Error Occurred",
-        });
-    }
-
-    return {
-        "status": "success",
+    const res = {
         "isAuthenticated": isAuthenticated,
         "accessToken": accessToken,
-        "refresh_token": refresh_token
+        "refreshToken": savedToken[0].refresh_token
     }
+
+    return ApiResponse.response("success", "record_found", res);
+
+    
 }
 
 const refreshAccessToken = async (payload) => {
 
-    const mandateKeys = ["refresh_token", "username"];
+    const mandateKeys = ["refreshToken", "username"];
     const hasRequiredFields = mandateKeys.every(prop => payload.hasOwnProperty(prop));
     if (!hasRequiredFields) {
-        return {
-            "status": "failure",
-            "message": "req.body does not have valid parameters",
-        };
+        return ApiResponse.response("failure", "req.body does not have valid parameters")
     }
-    const savedToken = await selectRefreshTokenUsingUsername(payload);
+
+    const savedToken = await selectRefreshTokenUsingUsernameToken(payload);
 
     if (!savedToken.length){
-        return {
-            "status": "failure",
-            "message": "invalid req token or username",
-        };
+        return ApiResponse.response("failure", "invalid req token or username")
     }
-
 
     const accessToken = jwt.sign({ username: payload["username"] }, secretKey, { expiresIn: '1h' });
-    const refresh_token = jwt.sign({ username: payload["username"] }, secretKey);
+
+    return ApiResponse.response("success", "record_found", {accessToken});
+    // Dynamicallly update refreshToken for multiple devices - will need some kind of device id for this implementation. For now a single refresh would do the job.
+    // const refreshToken = jwt.sign({ username: payload["username"] }, secretKey);
 
 
-    const data = {
-        "username": payload["username"],
-        "refresh_token": refresh_token
-    }
+    // const data = {
+    //     "username": payload["username"],
+    //     "refreshToken": refreshToken
+    // }
 
-    const insertRes = await insertRefreshToken(data);
+    // const insertRes = await insertRefreshToken(data);
 
-    if (insertRes == "error"){
-        return ({ 
-            "status": "failure",
-            "data": "Some Error Occurred",
-        });
-    }
+    // if (insertRes == "error"){
+    //     return ({ 
+    //         "status": "failure",
+    //         "data": "Some Error Occurred",
+    //     });
+    // }
 
 
-    return {
-        "status": "success",
-        "accessToken": accessToken,
-        "refresh_token": refresh_token
-    }
 }
 
 module.exports = {

@@ -1,5 +1,7 @@
 const userTableName = "user";
+const purchaseTableName = "purchase";
 
 module.exports = {
-    userTableName
+    userTableName,
+    purchaseTableName
 }
