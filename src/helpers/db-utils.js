@@ -10,6 +10,25 @@ const executeQuery = async (sqlQuery, params = []) => {
     }
 };
 
+const executeInsertQuery = (query) => {
+    return new Promise((resolve, reject) => {
+        try{
+            dbConnection.query(query, function (err, result) {
+                if (err){
+                    reject(err)
+                    return "error"
+                }
+                resolve(result);
+            });
+        }
+        catch(e){
+            reject(e)
+            return "error"
+        }
+    })
+}
+
 module.exports = {
-    executeQuery
+    executeQuery,
+    executeInsertQuery
 };
