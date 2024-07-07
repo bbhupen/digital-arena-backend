@@ -16,7 +16,7 @@ app.use(express.json())
 
 app.use("/", userRoute);
 app.use("/", customerRoute);
-// app.use("/", purchaseRoute);
+app.use("/", purchaseRoute);
 app.use("/", saleRoute);
 app.use("/", locationRoute);
 
