@@ -1,9 +1,10 @@
-const { userTableName, customerTableName } = require("../helpers/constant");
-const { executeQuery } = require("../helpers/db-utils");
+const { customerTableName } = require("../helpers/constant");
+const { executeQuery, executeInsertQuery } = require("../helpers/db-utils");
 
-const selectAllCustomers = async () => {
-    const customersQuery = `SELECT * FROM ${customerTableName}`;
-    const customersResults = await executeQuery(customersQuery);
+const seachCustomerUsingPhno = async (data) => {
+    const customersQuery = `SELECT * FROM ${customerTableName} WHERE phno LIKE ? limit 5`;
+    const phnoSearch = `%${data['phno']}%`;
+    const customersResults = await executeQuery(customersQuery,[phnoSearch]);
     return customersResults;
 }
 
@@ -13,10 +14,10 @@ const selectLatestCustomerID = async () => {
     return customeridResults;
 }
 
-const createCutomerRecord = async (keys,data) => {
+const createCustomerRecord = async (keys,data) => {
     const insertQuery = `insert into ${customerTableName} (${keys}) values(?,?,?,?,?,?,?,?)`;
-    const createCusomterResults = await executeQuery(insertQuery, data);
-    return createCusomterResults;
+    const createCustomerResult = await executeInsertQuery(insertQuery, data, customerTableName, "customer_id");
+    return createCustomerResult;
 }
 
 
@@ -29,5 +30,6 @@ const createCutomerRecord = async (keys,data) => {
 
 module.exports = {
     selectLatestCustomerID,
-    createCutomerRecord
+    createCustomerRecord,
+    seachCustomerUsingPhno
 };

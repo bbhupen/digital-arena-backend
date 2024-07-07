@@ -10,23 +10,30 @@ const executeQuery = async (sqlQuery, params = []) => {
     }
 };
 
-const executeInsertQuery = (query) => {
-    return new Promise((resolve, reject) => {
-        try{
-            dbConnection.query(query, function (err, result) {
-                if (err){
-                    reject(err)
-                    return "error"
-                }
-                resolve(result);
-            });
+const executeInsertQuery = async (sqlQuery, params = [], tableName = null, primaryKey = 'id') => {
+    const connection = await pool.getConnection(); 
+    try {
+        await connection.beginTransaction(); 
+
+        const res = await connection.query(sqlQuery, params); 
+
+        let insertedRow = null;
+        if (tableName && sqlQuery.trim().toLowerCase().startsWith('insert')) {
+            const lastInsertIdQuery = `SELECT * FROM ${tableName} WHERE ${primaryKey} = LAST_INSERT_ID()`;
+            const [rows] = await connection.query(lastInsertIdQuery);
+            insertedRow = rows; 
         }
-        catch(e){
-            reject(e)
-            return "error"
-        }
-    })
-}
+
+        await connection.commit(); 
+        return insertedRow || res
+    } catch (error) {
+        await connection.rollback(); 
+        console.error('Error executing query:', error);
+        return "error";
+    } finally {
+        connection.release(); 
+    }
+};
 
 module.exports = {
     executeQuery,

@@ -1,13 +1,13 @@
-const { userTableName } = require("../helpers/constant");
-const { executeQuery } = require("../helpers/db-utils");
+const { saleTableName } = require("../helpers/constant");
+const { executeInsertQuery } = require("../helpers/db-utils");
 
-const getUsers = async () => {
-    const users = `SELECT * from ${userTableName}`
-    const usersResults = await executeQuery(users);
-    return usersResults;
+const createSaleRecord = async (keys,data) => {
+    const insertQuery = `insert into ${saleTableName} (${keys}) values(?,?,?,?,?,?,?,?)`;
+    const createCusomterResults = await executeInsertQuery(insertQuery, data, saleTableName, "sales_id");
+    return createCusomterResults;
 }
 
 
 module.exports = {
-    getUsers
+    createSaleRecord,
 }

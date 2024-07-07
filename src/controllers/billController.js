@@ -4,7 +4,7 @@ const { createSale } = require('../services/saleServices');
 const router = express.Router()
 
 
-router.post("/api/v1/sale/create", async (req, res) => {
+router.post("/api/v1/bill/create", async (req, res) => {
   const requestBody = req.body;
   const response = await createSale(requestBody);
 
