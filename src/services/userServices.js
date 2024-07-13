@@ -22,6 +22,10 @@ const loginService = async (payload) => {
     const inputPassword = await toMD5(password);
     const user = await selectUserUsingUsername(payload);
 
+    if (!user.length){
+        return ApiResponse.response("failure", "invalid password or username")
+    }
+
     const isAuthenticated = inputPassword === user[0]['password'];
 
     if (!isAuthenticated) {
