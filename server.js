@@ -20,8 +20,13 @@ app.use("/", purchaseRoute);
 app.use("/", saleRoute);
 app.use("/", locationRoute);
 
-
-
+// Handle 404 - Not Found
+app.use((req, res, next) => {
+    res.status(404).send({
+        error: 'Not Found',
+        message: 'The requested resource was not found',
+    });
+});
 
 app.listen(PORT, () => {
     console.log(`App listening on PORT ${PORT}`);

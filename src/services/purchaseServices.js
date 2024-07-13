@@ -1,24 +1,28 @@
 const { getPurchaseByID } = require("../data_access/purchaseRepo");
 const ApiResponse = require("../helpers/apiresponse");
+const resCode = require("../helpers/responseCodes");
+const { validatePayload } = require("../helpers/utils");
 
 const getPurchaseDetails = async (payload) => {
-    const mandateKeys = ["purchase_id"];
-    const hasRequiredFields = mandateKeys.every(prop => payload.hasOwnProperty(prop));
-    if (!hasRequiredFields) {
-        return ApiResponse.response("failure", "req.body does not have valid parameters")
-    }
-    const { purchase_id } = payload;
+    try {
+        const mandateKeys = ["purchase_id"];
+        const validation = await validatePayload(payload, mandateKeys);
 
-    if (purchase_id.trim().length === 0){
-        return ApiResponse.response("failure", "Please provide valid parameters")
-    }
+        if (!validation.valid){
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters")
+        }
+        
+        const purchaseRecord = await getPurchaseByID(payload);
+        if (!purchaseRecord){
+            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found");
+        }
     
-    const purchaseRecord = await getPurchaseByID(payload);
-    if (!purchaseRecord){
-        return ApiResponse.response("success", "no_record_found");
+        return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", purchaseRecord);
+    } catch (error) {
+        console.log(error)
+        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
     }
 
-    return ApiResponse.response("success", "record_found", purchaseRecord);
 
 }
 

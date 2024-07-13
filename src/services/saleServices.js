@@ -1,27 +1,38 @@
 const { createSaleRecord } = require("../data_access/salesRepo");
 const ApiResponse = require("../helpers/apiresponse");
 const { validatePayload } = require("../helpers/utils");
+const resCode = require("../helpers/responseCodes");
 
 const createSale = async (payload) => {
-    const mandateKeys = ["purchase_id", "model", "sale_quantity", "unit_sale_value", "total_sale_value", "sale_by"];
-    const validation = await validatePayload(payload, mandateKeys);
-
-    if (!validation.valid) {
-        return ApiResponse.response("failure", "req.body does not have valid parameters")
-    }
-
-    payload["bill_no"] = "NULL";
-    payload["status"] = "0";
-
-    const keys = Object.keys(payload).toString();
-    const values = Object.keys(payload)
-        .map((key) =>
-            payload[key]
-        )
-
-    const createSaleRes = await createSaleRecord(keys, values);
+    try {
+        const mandateKeys = ["purchase_id", "model", "sale_quantity", "unit_sale_value", "total_sale_value", "sale_by"];
+        const validation = await validatePayload(payload, mandateKeys);
     
-    return ApiResponse.response("success", "record_inserted", createSaleRes);
+        if (!validation.valid) {
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters")
+        }
+    
+        payload["bill_no"] = "NULL";
+        payload["status"] = "0";
+    
+        const keys = Object.keys(payload).toString();
+        const values = Object.keys(payload)
+            .map((key) =>
+                payload[key]
+            )
+    
+        const createSaleRes = await createSaleRecord(keys, values);
+
+        if (createSaleRes == "error"){
+            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+        }
+        
+        return ApiResponse.response(resCode.RECORD_CREATED, "success", "record_inserted", createSaleRes);
+    } catch (error) {
+        console.log(error)
+        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+    }
+    
 }
 
 
