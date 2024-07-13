@@ -4,7 +4,7 @@ const { getPurchaseDetails } = require('../services/purchaseServices');
 const router = express.Router()
 
 
-router.get("/api/v1/purchase/get", verifyAccessToken, async (req, res) => {
+router.get("/api/v1/purchase/get", async (req, res) => {
     const requestBody = req.body;
     const response = await getPurchaseDetails(requestBody);
 
