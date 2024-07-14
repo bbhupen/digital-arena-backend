@@ -13,7 +13,7 @@ const createSale = async (payload) => {
         }
     
         payload["bill_no"] = "NULL";
-        payload["status"] = "0";
+        payload["status"] = "2";
     
         const keys = Object.keys(payload).toString();
         const values = Object.keys(payload)

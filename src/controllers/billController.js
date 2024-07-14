@@ -1,12 +1,12 @@
 const express = require('express');
-const { createSale } = require('../services/saleServices');
+const { createBill } = require('../services/billServices');
 
 const router = express.Router()
 
 
 router.post("/api/v1/bill/create", async (req, res) => {
   const requestBody = req.body;
-  const response = await createSale(requestBody);
+  const response = await createBill(requestBody);
 
   if (!response || Object.keys(response).length === 0) {
       return res.status(404).json({ error: 'Unexpected error occurred'});

@@ -9,7 +9,7 @@ const seachCustomerUsingPhno = async (data) => {
 }
 
 const selectLatestCustomerID = async () => {
-    const customeridQuery = `SELECT MAX(customer_id) as customer_id FROM ${customerTableName}`;
+    const customeridQuery = `SELECT MAX(CAST(customer_id AS UNSIGNED)) as customer_id FROM ${customerTableName}`;
     const customeridResults = await executeQuery(customeridQuery);
     return customeridResults;
 }
