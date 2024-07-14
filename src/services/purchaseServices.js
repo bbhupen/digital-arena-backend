@@ -17,7 +17,6 @@ const getPurchaseDetails = async (payload) => {
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found");
         }
 
-        purchaseRecord["gst"] = 18;
         return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", purchaseRecord);
     } catch (error) {
         console.log(error)

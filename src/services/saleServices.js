@@ -5,7 +5,7 @@ const resCode = require("../helpers/responseCodes");
 
 const createSale = async (payload) => {
     try {
-        const mandateKeys = ["purchase_id", "model", "sale_quantity", "unit_sale_value", "total_sale_value", "sale_by"];
+        const mandateKeys = ["purchase_id", "model", "grand_total", "sale_quantity", "unit_sale_value", "total_sale_value", "sale_by", "gst", "serial_no"];
         const validation = await validatePayload(payload, mandateKeys);
     
         if (!validation.valid) {

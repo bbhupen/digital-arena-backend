@@ -7,7 +7,7 @@ const { updateSalesRecord } = require("../data_access/salesRepo");
 
 const createBill = async (payload) => {
     try {
-        const mandateKeys = ["customer_id", "sales_id", "location_id", "payment_mode_status", "transaction_fee", "discount", "net_total", "grand_total_bill", "bill_by"];
+        const mandateKeys = ["customer_id", "sales_id", "location_id", "payment_mode_status", "transaction_fee", "discount", "net_total", "grand_total_bill"];
         const validation = await validatePayload(payload, mandateKeys);
     
         if (!validation.valid) {
@@ -27,7 +27,7 @@ const createBill = async (payload) => {
         }
 
         payload["bill_id"] = bill_id;
-        payload["status"] = "0";
+        payload["status"] = "1";
         payload["cfin_yr"] = current_fin_year[0].year;
         const sales_id = payload.sales_id;
         delete payload.sales_id;

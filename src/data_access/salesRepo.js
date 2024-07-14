@@ -2,7 +2,7 @@ const { saleTableName } = require("../helpers/constant");
 const { executeInsertQuery, executeQuery } = require("../helpers/db-utils");
 
 const createSaleRecord = async (keys,data) => {
-    const insertQuery = `insert into ${saleTableName} (${keys}) values(?,?,?,?,?,?,?,?)`;
+    const insertQuery = `insert into ${saleTableName} (${keys}) values(?,?,?,?,?,?,?,?,?,?,?)`;
     const createCusomterResults = await executeInsertQuery(insertQuery, data, saleTableName, "sales_id");
     return createCusomterResults;
 }

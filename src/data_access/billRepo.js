@@ -14,7 +14,7 @@ const getCurrentFinYear = async () => {
 }
 
 const createBillRecord = async (keys,data) => { 
-    const insertQuery = `insert into ${billTableName} (${keys}) values(?,?,?,?,?,?,?,?,?,?,?)`;
+    const insertQuery = `insert into ${billTableName} (${keys}) values(?,?,?,?,?,?,?,?,?,?)`;
     const createBillResult = await executeInsertQuery(insertQuery, data, billTableName, "bill_id");
     return createBillResult;
 }
