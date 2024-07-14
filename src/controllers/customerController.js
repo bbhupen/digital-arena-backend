@@ -17,7 +17,7 @@ router.post("/api/v1/customer/create", async (req, res) => {
 })
 
 router.get("/api/v1/customer/search", async (req, res) => {
-  const requestBody = req.body;
+  const requestBody = req.query;
   const response = await searchCustomer(requestBody)
 
   if (!response || Object.keys(response).length === 0) {
