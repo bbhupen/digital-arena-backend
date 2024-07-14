@@ -5,8 +5,8 @@ const router = express.Router()
 
 
 router.get("/api/v1/purchase/get", async (req, res) => {
-    const requestBody = req.body;
-    const response = await getPurchaseDetails(requestBody);
+    const queryParams = req.query;
+    const response = await getPurchaseDetails(queryParams);
 
     if (!response || Object.keys(response).length === 0) {
         return res.status(404).json({ error: 'Unexpected error occurred'});
