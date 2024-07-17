@@ -15,7 +15,24 @@ const validatePayload = async (payload, requiredFields) => {
         return { valid: false };
     }
 
-    const hasNoBlankFields = requiredFields.every(prop => payload[prop].trim() !== "");
+    const hasNoBlankFields = requiredFields.every(prop => {
+        const value = payload[prop];
+    
+        if (typeof value === "string" && value.trim() === "") {
+            return false;
+        }
+    
+        if (Array.isArray(value) && value.length === 0) {
+            return false;
+        }
+    
+        if (typeof value === "object" && value !== null && !Array.isArray(value) && Object.keys(value).length === 0) {
+            return false;
+        }
+    
+        return true;
+    });
+
     if (!hasNoBlankFields) {
         return { valid: false };
     }

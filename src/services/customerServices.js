@@ -28,7 +28,6 @@ const createCustomer = async (payload) => {
 
                 return ApiResponse.response(resCode.RECORD_UPDATED, "success", "record updated", payload);
             }
-            // if true then update it 
 
             for (let field of mandateKeys) {
                 if (field == "phno") continue;

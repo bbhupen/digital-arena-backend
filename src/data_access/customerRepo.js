@@ -1,5 +1,5 @@
 const { customerTableName } = require("../helpers/constant");
-const { executeQuery, executeInsertQuery } = require("../helpers/db-utils");
+const { executeQuery } = require("../helpers/db-utils");
 
 const searchCustomerUsingPhno = async (data) => {
     const customersQuery = `SELECT * FROM ${customerTableName} WHERE phno LIKE ? limit 5`;
@@ -22,7 +22,7 @@ const selectLatestCustomerID = async () => {
 
 const createCustomerRecord = async (keys,data) => {
     const insertQuery = `insert into ${customerTableName} (${keys}) values(?,?,?,?,?,?,?,?)`;
-    const createCustomerResult = await executeInsertQuery(insertQuery, data, customerTableName, "customer_id");
+    const createCustomerResult = await executeQuery(insertQuery, data);
     return createCustomerResult;
 }
 

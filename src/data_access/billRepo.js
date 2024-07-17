@@ -1,5 +1,5 @@
 const { billTableName, finYearTableName } = require("../helpers/constant");
-const { executeQuery, executeInsertQuery } = require("../helpers/db-utils");
+const { executeQuery } = require("../helpers/db-utils");
 
 const getLatestBillId = async () => {
     const billIDQuery = `SELECT MAX(CAST(bill_id AS UNSIGNED)) AS bill_id FROM ${billTableName};`;
@@ -15,7 +15,7 @@ const getCurrentFinYear = async () => {
 
 const createBillRecord = async (keys,data) => { 
     const insertQuery = `insert into ${billTableName} (${keys}) values(?,?,?,?,?,?,?,?,?,?)`;
-    const createBillResult = await executeInsertQuery(insertQuery, data, billTableName, "bill_id");
+    const createBillResult = await executeQuery(insertQuery, data);
     return createBillResult;
 }
 

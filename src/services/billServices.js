@@ -3,7 +3,7 @@ const ApiResponse = require("../helpers/apiresponse");
 const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
 const { createBillRecord, getLatestBillId, getCurrentFinYear } = require("../data_access/billRepo");
-const { updateSalesRecord } = require("../data_access/salesRepo");
+const { updateSalesRecordinBill } = require("../data_access/salesRepo");
 
 const createBill = async (payload) => {
     try {
@@ -50,12 +50,17 @@ const createBill = async (payload) => {
             "sales_id": sales_id
         }
 
-        const updateSaleRes = await updateSalesRecord(data);
+        payload['sales_id'] = sales_id
+        const updateSaleRes = await updateSalesRecordinBill(data);
+        if (updateSaleRes == "invalid_id"){
+            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "failure", "invalid sales id")
+        }
+
         if (updateSaleRes == "error"){
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
         }
         
-        return ApiResponse.response(resCode.RECORD_CREATED, "success", "record_inserted", {bill_id});
+        return ApiResponse.response(resCode.RECORD_CREATED, "success", "record_inserted", payload);
     } catch (error) {
         console.log(error)
         return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");

@@ -6,24 +6,29 @@ const resCode = require("../helpers/responseCodes");
 const createSale = async (payload) => {
     try {
         const mandateKeys = ["purchase_id", "model", "grand_total", "sale_quantity", "unit_sale_value", "total_sale_value", "sale_by", "gst", "serial_no"];
-        const validation = await validatePayload(payload, mandateKeys);
-    
-        if (!validation.valid) {
+
+        if (!payload.length){
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters")
         }
-    
-        payload["bill_no"] = "NULL";
-        payload["status"] = "2";
-    
-        const keys = Object.keys(payload).toString();
-        const values = Object.keys(payload)
-            .map((key) =>
-                payload[key]
-            )
-    
+
+
+        for (let i = 0; i < payload.length; i++) {
+            const validation = await validatePayload(payload[i], mandateKeys);
+            
+            payload[i]["bill_no"] = "NULL";
+            payload[i]["status"] = "2";
+
+            if (!validation.valid) {
+                return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters")
+            }
+        }
+
+        const keys = Object.keys(payload[0]).toString();
+        const values = payload.map(item => Object.values(item));
+        
         const createSaleRes = await createSaleRecord(keys, values);
 
-        if (createSaleRes == "error"){
+        if (createSaleRes === "error") {
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
         }
         
