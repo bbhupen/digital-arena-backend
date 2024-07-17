@@ -1,5 +1,5 @@
 const ApiResponse = require("../helpers/apiresponse");
-const { createCustomerRecord, selectLatestCustomerID, seachCustomerUsingPhno } = require("../data_access/customerRepo");
+const { createCustomerRecord, selectLatestCustomerID, searchCustomerUsingPhno, selectCustomerUsingPhno, updateCustomerRecord } = require("../data_access/customerRepo");
 const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
 
@@ -10,6 +10,41 @@ const createCustomer = async (payload) => {
 
         if (!validation.valid) {
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters")
+        }
+
+        const customerExists = await selectCustomerUsingPhno(payload['phno']);
+        var isChanges = false;
+
+        if (customerExists.length){ 
+            payload['customer_id'] = customerExists[0]['customer_id']
+            
+
+            if (payload['shouldUpdate']){
+                const updateCustomerRes = await updateCustomerRecord(payload);
+
+                if (updateCustomerRes == 'error'){
+                    return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+                }
+
+                return ApiResponse.response(resCode.RECORD_UPDATED, "success", "record updated", payload);
+            }
+            // if true then update it 
+
+            for (let field of mandateKeys) {
+                if (field == "phno") continue;
+                if (field == "shouldUpdate") continue;
+                if (payload[field] !== customerExists[0][field]) { 
+                    isChanges = true; 
+                    break;
+                }
+            }
+
+            if (isChanges){
+                return ApiResponse.response(resCode.RECORD_MODIFIED, "success", "field modified", payload)
+            }
+
+            
+            return ApiResponse.response(resCode.RECORD_ALREADY_EXISTS, "success", "record already exists", payload) 
         }
 
         const maxCustomerId = await selectLatestCustomerID();
@@ -29,7 +64,7 @@ const createCustomer = async (payload) => {
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
         }
         
-        return ApiResponse.response(resCode.RECORD_CREATED, "success", "record created", {customer_id: customer_id});
+        return ApiResponse.response(resCode.RECORD_CREATED, "success", "record created", {payload});
     } catch (error) {
         console.log(error)
         return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
@@ -45,10 +80,10 @@ const searchCustomer = async (payload) => {
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters")
         }
     
-        const res = await seachCustomerUsingPhno(payload);
+        const res = await searchCustomerUsingPhno(payload);
     
         if (!res.length){
-            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found");    
+            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);    
         }
     
         return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", res);
