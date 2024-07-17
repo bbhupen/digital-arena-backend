@@ -46,6 +46,7 @@ const createCustomer = async (payload) => {
             return ApiResponse.response(resCode.RECORD_ALREADY_EXISTS, "success", "record already exists", payload) 
         }
 
+        delete payload.shouldUpdate;
         const maxCustomerId = await selectLatestCustomerID();
         const customer_id = parseInt(maxCustomerId[0].customer_id == null ? 0 : maxCustomerId[0].customer_id) + 1
         payload["customer_id"] = customer_id
@@ -63,7 +64,7 @@ const createCustomer = async (payload) => {
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
         }
         
-        return ApiResponse.response(resCode.RECORD_CREATED, "success", "record created", {payload});
+        return ApiResponse.response(resCode.RECORD_CREATED, "success", "record created", payload);
     } catch (error) {
         console.log(error)
         return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");

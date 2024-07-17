@@ -38,7 +38,6 @@ const updateCustomerRecord = async (data) => {
     data.hasOwnProperty("pincode") ? condition += `pincode="${data["pincode"]}",` : ``;
 
     const updateCustomerQuery = `UPDATE ${customerTableName} SET ${condition.slice(0, -1)} WHERE customer_id="${data["customer_id"]}";`;
-    console.log(updateCustomerQuery);
     const updateCustomerRes = await executeQuery(updateCustomerQuery);
     return updateCustomerRes;
 
