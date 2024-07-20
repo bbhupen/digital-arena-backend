@@ -1,6 +1,14 @@
 const { customerTableName } = require("../helpers/constant");
 const { executeQuery } = require("../helpers/db-utils");
 
+
+const searchCustomerRecordPagination = async (data) => {
+    const customersQuery = `SELECT * FROM ${customerTableName} WHERE phno like ? or name like ? limit ${data["start"]},10`;
+    const field = `%${data['field']}%`;
+    const customersResults = await executeQuery(customersQuery,[field, field]);
+    return customersResults;
+}
+
 const searchCustomerUsingPhno = async (data) => {
     const customersQuery = `SELECT * FROM ${customerTableName} WHERE phno LIKE ? limit 5`;
     const phnoSearch = `%${data['phno']}%`;
@@ -9,7 +17,7 @@ const searchCustomerUsingPhno = async (data) => {
 }
 
 const selectCustomerUsingPhno = async (phno) => {
-    const customersQuery = `SELECT * FROM ${customerTableName} WHERE phno LIKE ? `;
+    const customersQuery = `SELECT * FROM ${customerTableName} WHERE phno = ? `;
     const customersResults = await executeQuery(customersQuery,[phno]);
     return customersResults;
 }
@@ -50,6 +58,7 @@ const updateCustomerRecord = async (data) => {
 // }
 
 module.exports = {
+    searchCustomerRecordPagination,
     selectLatestCustomerID,
     createCustomerRecord,
     searchCustomerUsingPhno,

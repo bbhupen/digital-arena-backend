@@ -2,7 +2,7 @@
 const ApiResponse = require("../helpers/apiresponse");
 const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
-const { createBillRecord, getLatestBillId, getCurrentFinYear } = require("../data_access/billRepo");
+const { createBillRecord, getLatestBillId, getCurrentFinYear, getBillRecordUsingCustomerID } = require("../data_access/billRepo");
 const { updateSalesRecordinBill } = require("../data_access/salesRepo");
 
 const createBill = async (payload) => {
@@ -68,7 +68,32 @@ const createBill = async (payload) => {
     
 }
 
+const searchBillUsingCustomerId = async (payload) =>{
+    try {
+        const mandateKeys = ["customer_id", "start"];
+        const validation = await validatePayload(payload, mandateKeys);
+    
+        if (!validation.valid) {
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters")
+        }
+
+        const res = await getBillRecordUsingCustomerID(payload);
+    
+        if (!res.length){
+            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);    
+        }
+    
+        return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", res);   
+
+
+    } catch (error) {
+        console.log(error)
+        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+    }
+}
+
 
 module.exports = {
-    createBill
+    createBill,
+    searchBillUsingCustomerId
 };

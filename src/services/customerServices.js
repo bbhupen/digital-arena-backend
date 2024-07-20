@@ -1,5 +1,5 @@
 const ApiResponse = require("../helpers/apiresponse");
-const { createCustomerRecord, selectLatestCustomerID, searchCustomerUsingPhno, selectCustomerUsingPhno, updateCustomerRecord } = require("../data_access/customerRepo");
+const { createCustomerRecord, selectLatestCustomerID, searchCustomerUsingPhno, selectCustomerUsingPhno, updateCustomerRecord, searchCustomerRecordPagination } = require("../data_access/customerRepo");
 const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
 
@@ -83,7 +83,7 @@ const searchCustomer = async (payload) => {
         const res = await searchCustomerUsingPhno(payload);
     
         if (!res.length){
-            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);    
+            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);
         }
     
         return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", res);
@@ -94,8 +94,37 @@ const searchCustomer = async (payload) => {
 
 }
 
+const searchCustomerWithPagination = async (payload) => {
+    try {
+        const mandateKeys = ["field", "start", "search_all"];
+        const validation = await validatePayload(payload, mandateKeys);
+    
+        if (!validation.valid){
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters")
+        }
+
+        if (payload['search_all']){
+            payload["field"] = "";
+        }
+    
+        const res = await searchCustomerRecordPagination(payload);
+    
+        if (!res.length){
+            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);    
+        }
+    
+        return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", res);   
+    } catch (error) {
+        console.log(error)
+        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+    }
+
+        
+}
+
 
 module.exports = {
     createCustomer,
-    searchCustomer
+    searchCustomer,
+    searchCustomerWithPagination
 };
