@@ -1,4 +1,4 @@
-const { getPurchaseByID } = require("../data_access/purchaseRepo");
+const { getPurchaseByID, updatePurchasePhysicallyVerified } = require("../data_access/purchaseRepo");
 const ApiResponse = require("../helpers/apiresponse");
 const resCode = require("../helpers/responseCodes");
 const { validatePayload } = require("../helpers/utils");
@@ -26,6 +26,40 @@ const getPurchaseDetails = async (payload) => {
 
 }
 
+const physicallyVerifyPurchase = async (payload) => {
+    try {
+        const mandateKeys = ["purchase_id"];
+        const validation = await validatePayload(payload, mandateKeys);
+
+        if (!validation.valid){
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters")
+        }
+        
+        const purchaseRecord = await getPurchaseByID(payload);
+        if (!purchaseRecord){
+            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found");
+        }
+
+        if (purchaseRecord['physically_verified_status'] == 1){
+            return ApiResponse.response(resCode.RECORD_ALREADY_EXISTS, "success", "already verified");
+        }
+
+        const isUpdated = await updatePurchasePhysicallyVerified(payload);
+        if (isUpdated=="error"){
+            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+        }
+
+
+        return ApiResponse.response(resCode.RECORD_MODIFIED, "success", "purchase verified", {});
+    } catch (error) {
+        console.log(error)
+        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+    }
+
+
+}
+
 module.exports = {
-    getPurchaseDetails
+    getPurchaseDetails,
+    physicallyVerifyPurchase
 };

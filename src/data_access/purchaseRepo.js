@@ -7,7 +7,14 @@ const getPurchaseByID = async (data) => {
     return purchaseResults[0];
 }
 
+const updatePurchasePhysicallyVerified = async (data) => {
+    const updatePurchaseQuery = `UPDATE ${purchaseTableName} SET physically_verified_status=1 WHERE purchase_id=?;`;
+    const updatePurchaseRes = await executeQuery(updatePurchaseQuery, [data["purchase_id"]]);
+    return updatePurchaseRes;
+}
+
 
 module.exports = {
-    getPurchaseByID
+    getPurchaseByID,
+    updatePurchasePhysicallyVerified
 }

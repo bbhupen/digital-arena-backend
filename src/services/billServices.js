@@ -74,7 +74,7 @@ const searchBillUsingCustomerId = async (payload) =>{
         const validation = await validatePayload(payload, mandateKeys);
     
         if (!validation.valid) {
-            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters")
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters",[])
         }
 
         const res = await getBillRecordUsingCustomerID(payload);
