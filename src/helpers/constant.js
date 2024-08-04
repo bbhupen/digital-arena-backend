@@ -3,8 +3,9 @@ const purchaseTableName = "purchase";
 const customerTableName = "customer";
 const saleTableName = "sales";
 const locationTableName = "location";
-const billTableName = "bill"
-const finYearTableName = "current_fin_yr"
+const billTableName = "bill";
+const finYearTableName = "current_fin_yr";
+const billCustomerTableName = "bill_customer";
 
 module.exports = {
     userTableName,
@@ -13,5 +14,6 @@ module.exports = {
     saleTableName,
     locationTableName,
     billTableName,
-    finYearTableName
+    finYearTableName,
+    billCustomerTableName
 }

@@ -4,6 +4,8 @@ const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
 const { createBillRecord, getLatestBillId, getCurrentFinYear, getBillRecordUsingCustomerID } = require("../data_access/billRepo");
 const { updateSalesRecordinBill } = require("../data_access/salesRepo");
+const { updatePurchaseQuantity } = require("../data_access/purchaseRepo");
+const { updateBillCustomerRecord } = require("../data_access/customerRepo");
 
 const createBill = async (payload) => {
     try {
@@ -30,14 +32,19 @@ const createBill = async (payload) => {
         payload["status"] = "1";
         payload["cfin_yr"] = current_fin_year[0].year;
         const sales_id = payload.sales_id;
+        const purchase_id = payload.purchase_id;
+        const sale_quantity = payload.sale_quantity;
         delete payload.sales_id;
+        delete payload.purchase_id;
+        delete payload.sale_quantity;
 
         const keys = Object.keys(payload).toString();
         const values = Object.keys(payload)
             .map((key) =>
                 payload[key]
             )
-    
+        
+        //creating bill
         const createBillRes = await createBillRecord(keys, values);
 
         if (createBillRes == "error"){
@@ -50,7 +57,23 @@ const createBill = async (payload) => {
             "sales_id": sales_id
         }
 
+        // updating purchase stock
+        for (let i = 0; i < purchase_id.length; i++) {
+            const updatePurchaseData = {
+                purchase_id: purchase_id[i],
+                sale_quantity: sale_quantity[i]
+            }
+            const updatePurchaseRes = await updatePurchaseQuantity(updatePurchaseData);
+
+            if(!updatePurchaseRes.affectedRows){
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "stock exhausted",{})
+            }
+
+          }
+
         payload['sales_id'] = sales_id
+
+        // updating sales status
         const updateSaleRes = await updateSalesRecordinBill(data);
         if (updateSaleRes == "invalid_id"){
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "failure", "invalid sales id")
@@ -59,6 +82,17 @@ const createBill = async (payload) => {
         if (updateSaleRes == "error"){
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
         }
+
+        const billCustomerData = {
+            "customer_id": payload["customer_id"],
+            "bill_id": bill_id
+        }
+
+        // updating bill customer record
+        updateBillCustomerRecord(billCustomerData);
+
+        payload['purchase_id'] = purchase_id;
+        payload['sale_quantity'] = sale_quantity;
         
         return ApiResponse.response(resCode.RECORD_CREATED, "success", "record_inserted", payload);
     } catch (error) {

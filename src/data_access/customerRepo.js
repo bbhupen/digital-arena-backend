@@ -1,4 +1,4 @@
-const { customerTableName } = require("../helpers/constant");
+const { customerTableName, billCustomerTableName } = require("../helpers/constant");
 const { executeQuery } = require("../helpers/db-utils");
 
 
@@ -34,6 +34,22 @@ const createCustomerRecord = async (keys,data) => {
     return createCustomerResult;
 }
 
+const createBillCustomerRecord = async (keys,data) => {
+    const insertQuery = `insert into ${billCustomerTableName} (${keys}) values(?,?,?,?,?,?,?,?)`;
+    const createBillCustomerResult = await executeQuery(insertQuery, data);
+    return createBillCustomerResult;
+}
+
+const updateBillCustomerRecord = async (data) => {
+    let condition = ``;
+
+    data.hasOwnProperty("bill_id") ? condition += `bill_id="${data["bill_id"]}",` : ``;
+
+    const updateCustomerQuery = `UPDATE ${billCustomerTableName} SET ${condition.slice(0, -1)} WHERE bill_id="${data["customer_id"]}";`;
+    const updateCustomerRes = await executeQuery(updateCustomerQuery);
+    return updateCustomerRes;
+}
+
 const updateCustomerRecord = async (data) => {
     let condition = ``;
 
@@ -63,5 +79,7 @@ module.exports = {
     createCustomerRecord,
     searchCustomerUsingPhno,
     selectCustomerUsingPhno,
-    updateCustomerRecord
+    updateCustomerRecord,
+    createBillCustomerRecord,
+    updateBillCustomerRecord
 };

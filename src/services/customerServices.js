@@ -1,5 +1,5 @@
 const ApiResponse = require("../helpers/apiresponse");
-const { createCustomerRecord, selectLatestCustomerID, searchCustomerUsingPhno, selectCustomerUsingPhno, updateCustomerRecord, searchCustomerRecordPagination } = require("../data_access/customerRepo");
+const { createCustomerRecord, selectLatestCustomerID, searchCustomerUsingPhno, selectCustomerUsingPhno, updateCustomerRecord, searchCustomerRecordPagination, createBillCustomerRecord } = require("../data_access/customerRepo");
 const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
 
@@ -52,6 +52,11 @@ const createCustomer = async (payload) => {
         payload["customer_id"] = customer_id
 
         const keys = Object.keys(payload).toString();
+        if (payload.hasOwnProperty('customer_id')) {
+            payload.bill_id = payload.customer_id;
+            delete payload.customer_id;
+          }
+        const keys1 = Object.keys(payload).toString();
         
         const values = Object.keys(payload)
             .map((key) =>
@@ -59,10 +64,12 @@ const createCustomer = async (payload) => {
             )
 
         const createCustomerRes = await createCustomerRecord(keys, values);
+        createBillCustomerRecord(keys1,values);
         
         if (createCustomerRes == "error"){
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
         }
+
         
         return ApiResponse.response(resCode.RECORD_CREATED, "success", "record created", payload);
     } catch (error) {
