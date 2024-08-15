@@ -57,7 +57,6 @@ const createCustomer = async (payload) => {
             delete payload.customer_id;
           }
         const keys1 = Object.keys(payload).toString();
-        
         const values = Object.keys(payload)
             .map((key) =>
                 payload[key]
@@ -65,6 +64,9 @@ const createCustomer = async (payload) => {
 
         const createCustomerRes = await createCustomerRecord(keys, values);
         createBillCustomerRecord(keys1,values);
+
+        delete payload.bill_id;
+        payload['customer_id'] = customer_id;
         
         if (createCustomerRes == "error"){
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")

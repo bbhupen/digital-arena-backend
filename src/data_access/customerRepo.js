@@ -46,6 +46,7 @@ const updateBillCustomerRecord = async (data) => {
     data.hasOwnProperty("bill_id") ? condition += `bill_id="${data["bill_id"]}",` : ``;
 
     const updateCustomerQuery = `UPDATE ${billCustomerTableName} SET ${condition.slice(0, -1)} WHERE bill_id="${data["customer_id"]}";`;
+    console.log(data)
     const updateCustomerRes = await executeQuery(updateCustomerQuery);
     return updateCustomerRes;
 }

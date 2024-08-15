@@ -34,9 +34,11 @@ const createBill = async (payload) => {
         const sales_id = payload.sales_id;
         const purchase_id = payload.purchase_id;
         const sale_quantity = payload.sale_quantity;
+        const customer_id = payload.customer_id;
         delete payload.sales_id;
         delete payload.purchase_id;
         delete payload.sale_quantity;
+        delete payload.customer_id;
 
         const keys = Object.keys(payload).toString();
         const values = Object.keys(payload)
@@ -84,15 +86,18 @@ const createBill = async (payload) => {
         }
 
         const billCustomerData = {
-            "customer_id": payload["customer_id"],
+            "customer_id": customer_id,
             "bill_id": bill_id
         }
 
         // updating bill customer record
-        updateBillCustomerRecord(billCustomerData);
+        const res = await updateBillCustomerRecord(billCustomerData);
+
+        console.log(res);
 
         payload['purchase_id'] = purchase_id;
         payload['sale_quantity'] = sale_quantity;
+        payload['customer_id'] = customer_id;
         
         return ApiResponse.response(resCode.RECORD_CREATED, "success", "record_inserted", payload);
     } catch (error) {
@@ -115,6 +120,10 @@ const searchBillUsingCustomerId = async (payload) =>{
     
         if (!res.length){
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);    
+        }
+
+        if (!res=="error"){
+            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "some unexpected error occurred", []);    
         }
     
         return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", res);   
