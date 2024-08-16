@@ -90,6 +90,10 @@ const searchCustomer = async (payload) => {
         }
     
         const res = await searchCustomerUsingPhno(payload);
+
+        if (res == "error"){
+            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred", [])
+        }
     
         if (!res.length){
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);
@@ -117,6 +121,10 @@ const searchCustomerWithPagination = async (payload) => {
         }
     
         const res = await searchCustomerRecordPagination(payload);
+
+        if (res == "error"){
+            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred", [])
+        }
     
         if (!res.length){
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);    

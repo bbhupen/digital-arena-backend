@@ -117,13 +117,13 @@ const searchBillUsingCustomerId = async (payload) =>{
         }
 
         const res = await getBillRecordUsingCustomerID(payload);
-    
+
         if (!res.length){
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);    
         }
 
-        if (!res=="error"){
-            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "some unexpected error occurred", []);    
+        if (res=="error"){
+            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "failure", "some unexpected error occurred", []);    
         }
     
         return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", res);   
