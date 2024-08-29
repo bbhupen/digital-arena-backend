@@ -1,4 +1,4 @@
-const { billTableName, finYearTableName, billCustomerTableName } = require("../helpers/constant");
+const { billTableName, finYearTableName, billCustomerTableName, customerCreditTableName, customerCreditHistTableName } = require("../helpers/constant");
 const { executeQuery } = require("../helpers/db-utils");
 
 const getLatestBillId = async () => {
@@ -21,7 +21,43 @@ const getCurrentFinYear = async () => {
 }
 
 const createBillRecord = async (keys,data) => { 
-    const insertQuery = `insert into ${billTableName} (${keys}) values(?,?,?,?,?,?,?,?,?)`;
+    const insertQuery = `insert into ${billTableName} (${keys}) values(?,?,?,?,?,?,?,?,?,?,?)`;
+    const createBillResult = await executeQuery(insertQuery, data);
+    return createBillResult;
+}
+
+const createCreditBillRecord = async (keys,data) => { 
+    let valuesPlaceholder = "";
+    for (let i = 0; i < data.length; i++) {
+        valuesPlaceholder += "?,";
+    }
+    valuesPlaceholder = valuesPlaceholder.slice(0, -1);
+
+    const insertQuery = `insert into ${billTableName} (${keys}) values(${valuesPlaceholder})`;
+    const createBillResult = await executeQuery(insertQuery, data);
+    return createBillResult;
+}
+
+const createCustomerCredit = async (keys,data) => { 
+    let valuesPlaceholder = "";
+    for (let i = 0; i < data.length; i++) {
+        valuesPlaceholder += "?,";
+    }
+    valuesPlaceholder = valuesPlaceholder.slice(0, -1);
+
+    const insertQuery = `insert into ${customerCreditTableName} (${keys}) values(${valuesPlaceholder})`;
+    const createBillResult = await executeQuery(insertQuery, data);
+    return createBillResult;
+}
+
+const createCustomerCreditHist = async (keys,data) => { 
+    let valuesPlaceholder = "";
+    for (let i = 0; i < data.length; i++) {
+        valuesPlaceholder += "?,";
+    }
+    valuesPlaceholder = valuesPlaceholder.slice(0, -1);
+
+    const insertQuery = `insert into ${customerCreditHistTableName} (${keys}) values(${valuesPlaceholder})`;
     const createBillResult = await executeQuery(insertQuery, data);
     return createBillResult;
 }
@@ -38,5 +74,8 @@ module.exports = {
     getLatestBillId,
     getBillRecordUsingCustomerID,
     getCurrentFinYear,
-    createBillRecord
+    createBillRecord,
+    createCreditBillRecord,
+    createCustomerCredit,
+    createCustomerCreditHist
 };
