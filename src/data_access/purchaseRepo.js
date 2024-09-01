@@ -20,6 +20,7 @@ const updatePurchaseQuantity = async (data) => {
 
     const purchaseUpdateQuery = `UPDATE ${purchaseTableName} SET ${condition.slice(0, -1)} WHERE purchase_id="${data["purchase_id"]}" AND total_quantity_left >= ${data["sale_quantity"]};`;
     const purchaseUpdateRes = await executeQuery(purchaseUpdateQuery);
+    purchaseUpdateRes["purchase_id"] = data["purchase_id"];
     return purchaseUpdateRes;
 
 }

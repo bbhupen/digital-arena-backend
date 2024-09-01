@@ -6,6 +6,8 @@ const locationTableName = "location";
 const billTableName = "bill";
 const finYearTableName = "current_fin_yr";
 const billCustomerTableName = "bill_customer";
+const customerCreditTableName = "customer_credit";
+const customerCreditHistTableName = "customer_credit_rec_hist";
 
 module.exports = {
     userTableName,
@@ -15,5 +17,7 @@ module.exports = {
     locationTableName,
     billTableName,
     finYearTableName,
-    billCustomerTableName
+    billCustomerTableName,
+    customerCreditTableName,
+    customerCreditHistTableName
 }
