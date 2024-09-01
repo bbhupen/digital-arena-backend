@@ -114,7 +114,7 @@ const searchBillUsingCustomerId = async (payload) =>{
 
 const createCreditBill = async (payload) => {
     try {
-        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "location_id", "card_no_upi_id", "transaction_fee", "discount", "net_total", "grand_total_bill", "total_credit_amt", "credit_amount_left", "customer_credit_date" ];
+        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "location_id", "card_no_upi_id", "transaction_fee", "discount", "net_total", "grand_total_bill", "total_credit_amt", "credit_amount_left", "customer_credit_date", "grand_total_credit_amount" ];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
@@ -131,7 +131,7 @@ const createCreditBill = async (payload) => {
         }
 
         const bill_id = parseInt(maxBillId[0]?.bill_id || 0) + 1;
-        const { sales_id, purchase_id, sale_quantity, customer_id, credit_amount_left, credit_amount_paid, customer_credit_date, transaction_fee, card_no_upi_id, grand_total_bill } = payload;
+        const { sales_id, purchase_id, sale_quantity, customer_id, credit_amount_left, credit_amount_paid, customer_credit_date, transaction_fee, card_no_upi_id, grand_total_bill, grand_total_credit_amount } = payload;
         delete payload.transaction_fee;
 
         payload = {
@@ -154,6 +154,7 @@ const createCreditBill = async (payload) => {
         delete billPayload.credit_amount_left;
         delete billPayload.customer_credit_date;
         delete billPayload.credit_amount_paid;
+        delete billPayload.grand_total_credit_amount;
 
         const createBillRes = await createCreditBillRecord(Object.keys(billPayload).toString(), Object.values(billPayload));
 
@@ -174,7 +175,7 @@ const createCreditBill = async (payload) => {
             card_no_upi_id: card_no_upi_id,
             transaction_fee: transaction_fee, 
             total_given: credit_amount_paid, 
-            grand_total: grand_total_bill, 
+            grand_total: grand_total_credit_amount, 
             next_credit_date: customer_credit_date,
             isdownpayment: 0 
         };
