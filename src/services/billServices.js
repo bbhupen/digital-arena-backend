@@ -9,7 +9,7 @@ const { updateBillCustomerRecord } = require("../data_access/customerRepo");
 const createBill = async (payload) => {
     try {
         // Validate payload
-        const mandateKeys = ["customer_id", "sales_id", "location_id", "card_no", "payment_mode_status", "transaction_fee", "discount", "net_total", "grand_total_bill"];
+        const mandateKeys = ["customer_id", "sales_id", "location_id", "card_no_upi_id", "payment_mode_status", "transaction_fee", "discount", "net_total", "grand_total_bill"];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
