@@ -5,7 +5,7 @@ const resCode = require("../helpers/responseCodes");
 
 const createSale = async (payload) => {
     try {
-        const mandateKeys = ["purchase_id", "model", "grand_total", "sale_quantity", "unit_sale_value", "total_sale_value", "sale_by", "gst", "serial_no"];
+        const mandateKeys = ["purchase_id", "model", "grand_total", "hsn_no", "sale_quantity", "unit_sale_value", "total_sale_value", "sale_by", "gst", "serial_no"];
 
         if (!payload.length){
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters")

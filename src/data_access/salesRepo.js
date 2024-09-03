@@ -2,7 +2,7 @@ const { saleTableName } = require("../helpers/constant");
 const { executeBulkInsertQuery, executeBulkUpdateQuery, executeQuery } = require("../helpers/db-utils");
 
 const createSaleRecord = async (keys,data) => {
-    const insertQuery = `insert into ${saleTableName} (${keys}) values(?,?,?,?,?,?,?,?,?,?,?)`;
+    const insertQuery = `insert into ${saleTableName} (${keys}) values(?,?,?,?,?,?,?,?,?,?,?,?)`;
     const createCusomterResults = await executeBulkInsertQuery(insertQuery, data, saleTableName, "sales_id");
     return createCusomterResults;
 }
