@@ -16,6 +16,12 @@ const searchCustomerUsingPhno = async (data) => {
     return customersResults;
 }
 
+const searchCustomerUsingID = async (data) => {
+    const customersQuery = `SELECT * FROM ${customerTableName} WHERE customer_id = ?`;
+    const customersResults = await executeQuery(customersQuery,[data['customer_id']]);
+    return customersResults;
+}
+
 const selectCustomerUsingPhno = async (phno) => {
     const customersQuery = `SELECT * FROM ${customerTableName} WHERE phno = ? `;
     const customersResults = await executeQuery(customersQuery,[phno]);
@@ -75,6 +81,7 @@ const updateCustomerRecord = async (data) => {
 // }
 
 module.exports = {
+    searchCustomerUsingID,
     searchCustomerRecordPagination,
     selectLatestCustomerID,
     createCustomerRecord,

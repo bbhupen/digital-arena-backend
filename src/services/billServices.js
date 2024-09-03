@@ -4,7 +4,7 @@ const resCode = require("../helpers/responseCodes");
 const { createBillRecord, getLatestBillId, getCurrentFinYear, getBillRecordUsingCustomerID, createCreditBillRecord, createCustomerCredit, createCustomerCreditHist } = require("../data_access/billRepo");
 const { updateSalesRecordinBill } = require("../data_access/salesRepo");
 const { updatePurchaseQuantity } = require("../data_access/purchaseRepo");
-const { updateBillCustomerRecord } = require("../data_access/customerRepo");
+const { updateBillCustomerRecord, searchCustomerUsingID, createBillCustomerRecord } = require("../data_access/customerRepo");
 
 const createBill = async (payload) => {
     try {
@@ -70,9 +70,19 @@ const createBill = async (payload) => {
         }
 
         // Update bill customer record
-        const billCustomerData = { customer_id, bill_id };
-        const updateCustomerRes = await updateBillCustomerRecord(billCustomerData);
-        console.log(updateCustomerRes);
+        const billCustomerData = (await searchCustomerUsingID({ customer_id }))[0];
+        delete billCustomerData.customer_id;
+        delete billCustomerData.inserted_at;
+        billCustomerData["bill_id"] = bill_id;
+
+        const keys1 = Object.keys(billCustomerData).toString();
+        const values = Object.keys(billCustomerData)
+            .map((key) =>
+                billCustomerData[key]
+            )
+
+        const createBillCustomerRes = await createBillCustomerRecord(keys1, values);
+
 
         // Return successful response
         return ApiResponse.response(resCode.RECORD_CREATED, "success", "Record inserted", payload);

@@ -63,7 +63,7 @@ const createCustomer = async (payload) => {
             )
 
         const createCustomerRes = await createCustomerRecord(keys, values);
-        createBillCustomerRecord(keys1,values);
+        // const createBillCustomerRes = await createBillCustomerRecord(keys1,values);
 
         delete payload.bill_id;
         payload['customer_id'] = customer_id;
