@@ -1,4 +1,4 @@
-const { billTableName, finYearTableName, billCustomerTableName, customerCreditTableName, customerCreditHistTableName } = require("../helpers/constant");
+const { billTableName, finYearTableName, billCustomerTableName, customerCreditTableName, customerCreditHistTableName, financeBillTableName } = require("../helpers/constant");
 const { executeQuery } = require("../helpers/db-utils");
 
 const getLatestBillId = async () => {
@@ -62,6 +62,18 @@ const createCustomerCreditHist = async (keys,data) => {
     return createBillResult;
 }
 
+const createFinanceBillRecord = async (keys,data) => { 
+    let valuesPlaceholder = "";
+    for (let i = 0; i < data.length; i++) {
+        valuesPlaceholder += "?,";
+    }
+    valuesPlaceholder = valuesPlaceholder.slice(0, -1);
+
+    const insertQuery = `insert into ${financeBillTableName} (${keys}) values(${valuesPlaceholder})`;
+    const createBillResult = await executeQuery(insertQuery, data);
+    return createBillResult;
+}
+
 
 
 // const insertRefreshToken = async (data) => {
@@ -77,5 +89,6 @@ module.exports = {
     createBillRecord,
     createCreditBillRecord,
     createCustomerCredit,
-    createCustomerCreditHist
+    createCustomerCreditHist,
+    createFinanceBillRecord
 };

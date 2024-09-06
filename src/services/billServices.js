@@ -1,7 +1,7 @@
 const ApiResponse = require("../helpers/apiresponse");
 const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
-const { createBillRecord, getLatestBillId, getCurrentFinYear, getBillRecordUsingCustomerID, createCreditBillRecord, createCustomerCredit, createCustomerCreditHist } = require("../data_access/billRepo");
+const { createBillRecord, getLatestBillId, getCurrentFinYear, getBillRecordUsingCustomerID, createCreditBillRecord, createCustomerCredit, createCustomerCreditHist, createFinanceBillRecord } = require("../data_access/billRepo");
 const { updateSalesRecordinBill } = require("../data_access/salesRepo");
 const { updatePurchaseQuantity } = require("../data_access/purchaseRepo");
 const { updateBillCustomerRecord, searchCustomerUsingID, createBillCustomerRecord } = require("../data_access/customerRepo");
@@ -13,7 +13,7 @@ const createBill = async (payload) => {
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
-            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "Invalid parameters in request body");
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters");
         }
 
         // Get the latest bill ID
@@ -128,7 +128,7 @@ const createCreditBill = async (payload) => {
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
-            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "Invalid parameters in request body");
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters");
         }
 
         const [maxBillId, current_fin_year] = await Promise.all([
@@ -158,8 +158,6 @@ const createCreditBill = async (payload) => {
         delete billPayload.purchase_id;
         delete billPayload.sale_quantity;
         delete billPayload.customer_id;
-        delete billPayload.discount;
-        delete billPayload.card_no_upi_id;
         delete billPayload.total_credit_amt;
         delete billPayload.credit_amount_left;
         delete billPayload.customer_credit_date;
@@ -218,9 +216,8 @@ const createCreditBill = async (payload) => {
         }
 
         const data = { bill_no: bill_id, status: 1, sales_id };
-        const [updateSaleRes, updateCustomerRes] = await Promise.all([
-            updateSalesRecordinBill(data),
-            updateBillCustomerRecord({ customer_id, bill_id })
+        const [updateSaleRes] = await Promise.all([
+            updateSalesRecordinBill(data)
         ]);
 
         if (updateSaleRes === "invalid_id") {
@@ -229,6 +226,20 @@ const createCreditBill = async (payload) => {
         if (updateSaleRes === "error") {
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while updating sales record");
         }
+
+        const billCustomerData = (await searchCustomerUsingID({ customer_id }))[0];
+        delete billCustomerData.customer_id;
+        delete billCustomerData.inserted_at;
+        billCustomerData["bill_id"] = bill_id;
+
+        const keys1 = Object.keys(billCustomerData).toString();
+        const values = Object.keys(billCustomerData)
+            .map((key) =>
+                billCustomerData[key]
+            )
+
+        const createBillCustomerRes = await createBillCustomerRecord(keys1, values);
+
 
         return ApiResponse.response(resCode.RECORD_CREATED, "success", "Record inserted", payload);
 
@@ -242,11 +253,11 @@ const createCreditBill = async (payload) => {
 const createFinanceBill = async (payload) => {
     try {
         // Validate payload
-        const mandateKeys = ["customer_id", "sales_id", "location_id", "transaction_fee", "discount", "net_total", "grand_total_bill", "hypo_by" ];
+        const mandateKeys = ["customer_id", "sales_id", "card_no_upi_id", "financer_name", "location_id", "transaction_fee", "discount", "net_total", "grand_total_bill", "downpayment_amt", "dispersed_amt", "other_fee" ];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
-            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "Invalid parameters in request body");
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters");
         }
 
         // Get the latest bill ID
@@ -266,7 +277,7 @@ const createFinanceBill = async (payload) => {
             cfin_yr: current_fin_year[0].year
         };
 
-        const { sales_id, purchase_id, sale_quantity, customer_id } = payload;
+        const { sales_id, purchase_id, sale_quantity, customer_id, card_no_upi_id, downpayment_amt, dispersed_amt, transaction_fee, other_fee ,financer_name } = payload;
 
         // Remove unnecessary keys for the bill creation
         const billPayload = { ...payload };
@@ -274,10 +285,11 @@ const createFinanceBill = async (payload) => {
         delete billPayload.purchase_id;
         delete billPayload.sale_quantity;
         delete billPayload.customer_id;
-        delete billPayload.discount;
         delete billPayload.transaction_fee;
-
-        console.log(billPayload)
+        delete billPayload.downpayment_amt;
+        delete billPayload.other_fee;
+        delete billPayload.financer_name;
+        delete billPayload.dispersed_amt;
 
         // Create bill
         const createBillRes = await createCreditBillRecord(Object.keys(billPayload).toString(), Object.values(billPayload));
@@ -286,36 +298,22 @@ const createFinanceBill = async (payload) => {
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating bill");
         }
 
-        const customerCreditData = { 
+        const financeBillData = { 
             bill_id: bill_id, 
-            status: 2, 
-            total_credit_amt: 4, 
-            credit_amount_left: 2 
+            financer_name: financer_name,
+            payment_mode_status: 5,
+            card_no_upi_id: card_no_upi_id,
+            transaction_fee: transaction_fee,
+            downpayment_amt: downpayment_amt,
+            dispersed_amt: dispersed_amt,
+            other_fee: other_fee
         };
 
-        const customerCreditHistoryData = { 
-            bill_id: bill_id, 
-            payment_mode_status: 6, 
-            transaction_fee: 0, 
-            total_given: 100, 
-            grand_total: 10, 
-            next_credit_date: 1,
-            isdownpayment: 0 
-        };
+        const financeBillRes = await createFinanceBillRecord(Object.keys(financeBillData).toString(), Object.values(financeBillData));
 
-        const createCustomerCreditRes = await createCustomerCredit(Object.keys(customerCreditData).toString(), Object.values(customerCreditData));
-
-        if (createCustomerCreditRes === "error") {
-            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating customer credit history record");
+        if (financeBillRes === "error") {
+            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while finance bill record");
         }
-
-
-        const createCustomerCreditHistoryRes = await createCustomerCreditHist(Object.keys(customerCreditHistoryData).toString(), Object.values(customerCreditHistoryData));
-
-        if (createCustomerCreditHistoryRes === "error") {
-            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating customer credit history record");
-        }
-
 
         const data = { bill_no: bill_id, status: 1, sales_id };
 
@@ -338,22 +336,19 @@ const createFinanceBill = async (payload) => {
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while updating sales record");
         }
 
-        /*
-            create customer credit record
+        const billCustomerData = (await searchCustomerUsingID({ customer_id }))[0];
+        delete billCustomerData.customer_id;
+        delete billCustomerData.inserted_at;
+        billCustomerData["bill_id"] = bill_id;
 
-            create customer credit history record
+        const keys1 = Object.keys(billCustomerData).toString();
+        const values = Object.keys(billCustomerData)
+            .map((key) =>
+                billCustomerData[key]
+            )
 
-            update purchase stock
+        const createBillCustomerRes = await createBillCustomerRecord(keys1, values);
 
-            update sales record
-
-            update bill_customer record
-
-        */
-
-        // Update bill customer record
-        const billCustomerData = { customer_id, bill_id };
-        const updateCustomerRes = await updateBillCustomerRecord(billCustomerData);
 
         // Return successful response
         return ApiResponse.response(resCode.RECORD_CREATED, "success", "Record inserted", payload);
