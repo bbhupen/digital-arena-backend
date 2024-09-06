@@ -1,10 +1,10 @@
 const ApiResponse = require("../helpers/apiresponse");
 const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
-const { createBillRecord, getLatestBillId, getCurrentFinYear, getBillRecordUsingCustomerID, createCreditBillRecord, createCustomerCredit, createCustomerCreditHist, createFinanceBillRecord } = require("../data_access/billRepo");
+const { createBillRecord, getLatestBillId, getCurrentFinYear, getBillRecordUsingCustomerID, createCreditBillRecord, createCustomerCredit, createCustomerCreditHist, createFinanceBillRecord, createCashAndOnlineRecord } = require("../data_access/billRepo");
 const { updateSalesRecordinBill } = require("../data_access/salesRepo");
 const { updatePurchaseQuantity } = require("../data_access/purchaseRepo");
-const { updateBillCustomerRecord, searchCustomerUsingID, createBillCustomerRecord } = require("../data_access/customerRepo");
+const { searchCustomerUsingID, createBillCustomerRecord } = require("../data_access/customerRepo");
 
 const createBill = async (payload) => {
     try {
@@ -93,7 +93,6 @@ const createBill = async (payload) => {
     }
 }
 
-
 const searchBillUsingCustomerId = async (payload) =>{
     try {
         const mandateKeys = ["customer_id", "start"];
@@ -124,7 +123,7 @@ const searchBillUsingCustomerId = async (payload) =>{
 
 const createCreditBill = async (payload) => {
     try {
-        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "location_id", "card_no_upi_id", "transaction_fee", "discount", "net_total", "grand_total_bill", "total_credit_amt", "credit_amount_left", "customer_credit_date", "grand_total_credit_amount" ];
+        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "payment_mode_status", "location_id", "card_no_upi_id", "transaction_fee", "discount", "net_total", "grand_total_bill", "total_credit_amt", "credit_amount_left", "customer_credit_date", "grand_total_credit_amount" ];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
@@ -141,8 +140,9 @@ const createCreditBill = async (payload) => {
         }
 
         const bill_id = parseInt(maxBillId[0]?.bill_id || 0) + 1;
-        const { sales_id, purchase_id, sale_quantity, customer_id, credit_amount_left, credit_amount_paid, customer_credit_date, transaction_fee, card_no_upi_id, grand_total_bill, grand_total_credit_amount } = payload;
+        const { sales_id, purchase_id, sale_quantity, customer_id, credit_amount_left, credit_amount_paid, customer_credit_date, transaction_fee, card_no_upi_id, grand_total_bill, grand_total_credit_amount, payment_mode_status } = payload;
         delete payload.transaction_fee;
+        delete payload.payment_mode_status;
 
         payload = {
             ...payload,
@@ -157,7 +157,7 @@ const createCreditBill = async (payload) => {
         delete billPayload.sales_id;
         delete billPayload.purchase_id;
         delete billPayload.sale_quantity;
-        delete billPayload.customer_id;
+        delete billPayload.customer_id;``
         delete billPayload.total_credit_amt;
         delete billPayload.credit_amount_left;
         delete billPayload.customer_credit_date;
@@ -179,7 +179,7 @@ const createCreditBill = async (payload) => {
 
         const customerCreditHistoryData = { 
             bill_id: bill_id, 
-            payment_mode_status: 6, 
+            payment_mode_status: payment_mode_status, 
             card_no_upi_id: card_no_upi_id,
             transaction_fee: transaction_fee, 
             total_given: credit_amount_paid, 
@@ -249,11 +249,10 @@ const createCreditBill = async (payload) => {
     }
 }
 
-
 const createFinanceBill = async (payload) => {
     try {
         // Validate payload
-        const mandateKeys = ["customer_id", "sales_id", "card_no_upi_id", "financer_name", "location_id", "transaction_fee", "discount", "net_total", "grand_total_bill", "downpayment_amt", "dispersed_amt", "other_fee" ];
+        const mandateKeys = ["customer_id", "sales_id", "payment_mode_status", "card_no_upi_id", "financer_name", "location_id", "transaction_fee", "discount", "net_total", "grand_total_bill", "downpayment_amt", "dispersed_amt", "other_fee" ];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
@@ -269,15 +268,21 @@ const createFinanceBill = async (payload) => {
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "failure", "Financial year record not found");
         }
 
+        const { sales_id, purchase_id, sale_quantity, customer_id, card_no_upi_id, downpayment_amt, dispersed_amt, transaction_fee, other_fee ,financer_name, payment_mode_status } = payload;
+        let cash_amt = "";
+        let online_amt = "";
+        let online_payment_mode = "";
+
+        delete payload.transaction_fee;
+        delete payload.payment_mode_status;
+
         payload = {
             ...payload,
             bill_id,
-            status: "1",
             payment_mode_status: "5",
+            status: "1",
             cfin_yr: current_fin_year[0].year
         };
-
-        const { sales_id, purchase_id, sale_quantity, customer_id, card_no_upi_id, downpayment_amt, dispersed_amt, transaction_fee, other_fee ,financer_name } = payload;
 
         // Remove unnecessary keys for the bill creation
         const billPayload = { ...payload };
@@ -291,6 +296,25 @@ const createFinanceBill = async (payload) => {
         delete billPayload.financer_name;
         delete billPayload.dispersed_amt;
 
+
+        // Create cash and online record
+        if (payment_mode_status === "7"){
+            cash_amt = payload.cash_amt;
+            online_amt = payload.online_amt;
+            online_payment_mode = payload.online_payment_mode;
+    
+            const cash_and_online_data = { bill_id, cash_amt, online_amt, online_payment_mode };
+            const createCashAndOnlineRes = await createCashAndOnlineRecord(Object.keys(cash_and_online_data).toString(), Object.values(cash_and_online_data));
+    
+            if (createCashAndOnlineRes === "error") {
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating cash and online record");
+            }
+        }
+
+        delete billPayload.cash_amt;
+        delete billPayload.online_amt;
+        delete billPayload.online_payment_mode;
+
         // Create bill
         const createBillRes = await createCreditBillRecord(Object.keys(billPayload).toString(), Object.values(billPayload));
 
@@ -301,7 +325,7 @@ const createFinanceBill = async (payload) => {
         const financeBillData = { 
             bill_id: bill_id, 
             financer_name: financer_name,
-            payment_mode_status: 5,
+            payment_mode_status: payment_mode_status,
             card_no_upi_id: card_no_upi_id,
             transaction_fee: transaction_fee,
             downpayment_amt: downpayment_amt,
