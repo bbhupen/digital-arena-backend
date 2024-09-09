@@ -32,7 +32,22 @@ const createBill = async (payload) => {
             cfin_yr: current_fin_year[0].year
         };
 
-        const { sales_id, purchase_id, sale_quantity, customer_id } = payload;
+        const { sales_id, purchase_id, sale_quantity, customer_id, payment_mode_status } = payload;
+        let online_payment_mode = "";
+
+        // Create cash and online record
+        if (payment_mode_status === "7"){
+            cash_amt = payload.cash_amt;
+            online_amt = payload.online_amt;
+            online_payment_mode = payload.online_payment_mode;
+    
+            const cash_and_online_data = { bill_id, cash_amt, online_amt, online_payment_mode };
+            const createCashAndOnlineRes = await createCashAndOnlineRecord(Object.keys(cash_and_online_data).toString(), Object.values(cash_and_online_data));
+    
+            if (createCashAndOnlineRes === "error") {
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating cash and online record");
+            }
+        }
 
         // Remove unnecessary keys for the bill creation
         const billPayload = { ...payload };
@@ -40,6 +55,9 @@ const createBill = async (payload) => {
         delete billPayload.purchase_id;
         delete billPayload.sale_quantity;
         delete billPayload.customer_id;
+        delete billPayload.cash_amt;
+        delete billPayload.online_amt;
+        delete billPayload.online_payment_mode;
 
         // Create bill
         const createBillRes = await createBillRecord(Object.keys(billPayload).toString(), Object.values(billPayload));
