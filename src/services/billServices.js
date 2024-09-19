@@ -5,11 +5,12 @@ const { createBillRecord, getLatestBillId, getCurrentFinYear, getBillRecordUsing
 const { updateSalesRecordinBill } = require("../data_access/salesRepo");
 const { updatePurchaseQuantity } = require("../data_access/purchaseRepo");
 const { searchCustomerUsingID, createBillCustomerRecord } = require("../data_access/customerRepo");
+const { createNotificationRecord } = require("../data_access/notificationRepo");
 
 const createBill = async (payload) => {
     try {
         // Validate payload
-        const mandateKeys = ["customer_id", "sales_id", "location_id", "card_no_upi_id", "payment_mode_status", "transaction_fee", "discount", "net_total", "grand_total_bill", "personal_discount"];
+        const mandateKeys = ["customer_id", "sales_id", "location_id", "card_no_upi_id", "payment_mode_status", "transaction_fee", "discount", "net_total", "grand_total_bill", "personal_discount", "sale_by", "remarks"];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
@@ -20,25 +21,33 @@ const createBill = async (payload) => {
         const maxBillId = await getLatestBillId();
         const bill_id = parseInt(maxBillId[0]?.bill_id || 0) + 1;
         const current_fin_year = await getCurrentFinYear();
+        var status = 1;
+        var notification_type = 0;
 
         if (!current_fin_year.length) {
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "failure", "Financial year record not found");
         }
 
+        // setting the status for the bill in case of credit or personal discount
+        if (payload.payment_mode_status == "6" || payload.personal_discount > 0){
+            status = 2;
+        }
+
         payload = {
             ...payload,
             bill_id,
-            status: "1",
+            status: status,
             cfin_yr: current_fin_year[0].year
         };
 
-        const { sales_id, purchase_id, sale_quantity, customer_id, payment_mode_status, personal_discount } = payload;
+        const { sales_id, purchase_id, sale_quantity, customer_id, payment_mode_status, personal_discount, location_id, sale_by, remarks } = payload;
         let online_payment_mode = "";
         let grand_total_personal = 0;
         let personal_discount_status = 0;
 
         if (personal_discount > 0) {
             personal_discount_status = 1;
+            notification_type = 1;
             grand_total_personal = parseInt(payload.grand_total_bill) - parseInt(personal_discount);    
         }
 
@@ -51,6 +60,8 @@ const createBill = async (payload) => {
         delete billPayload.cash_amt;
         delete billPayload.online_amt;
         delete billPayload.online_payment_mode;
+        delete billPayload.sale_by;
+        delete billPayload.remarks;
 
         // Create bill
         const createBillRes = await createBillRecord(Object.keys(billPayload).toString(), Object.values(billPayload));
@@ -73,7 +84,25 @@ const createBill = async (payload) => {
             }
         }
 
-        const data = { bill_no: bill_id, status: 1, sales_id };
+        const saleData = { 
+            bill_no: bill_id, 
+            status: status, 
+            sales_id
+        };
+
+        const notificationRecordData = {
+            bill_id: bill_id,
+            notification_type: notification_type,
+            notify_by: sale_by,
+            location_id: location_id,
+            remarks: remarks,
+            status: status
+        }
+
+        const notificationBillRes = await createNotificationRecord(Object.keys(notificationRecordData).toString(), Object.values(notificationRecordData));
+        if (notificationBillRes === "error") {
+            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating notification record");
+        }
 
         // Update purchase stock
         for (let i = 0; i < purchase_id.length; i++) {
@@ -86,7 +115,7 @@ const createBill = async (payload) => {
         }
 
         // Update sales record
-        const updateSaleRes = await updateSalesRecordinBill(data);
+        const updateSaleRes = await updateSalesRecordinBill(saleData);
         if (updateSaleRes === "invalid_id") {
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "failure", "Invalid sales ID");
         }
@@ -110,6 +139,10 @@ const createBill = async (payload) => {
 
 
         // Return successful response
+        if (status > 1){
+            return ApiResponse.response(resCode.REQUEST_SENT, "success", "Request Sent for admin to approve", payload);
+        }
+        
         return ApiResponse.response(resCode.RECORD_CREATED, "success", "Record inserted", payload);
 
     } catch (error) {
@@ -148,7 +181,7 @@ const searchBillUsingCustomerId = async (payload) =>{
 
 const createCreditBill = async (payload) => {
     try {
-        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "payment_mode_status", "location_id", "card_no_upi_id", "transaction_fee", "discount", "net_total", "grand_total_bill", "total_credit_amt", "credit_amount_left", "customer_credit_date", "grand_total_credit_amount" ];
+        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "payment_mode_status", "location_id", "card_no_upi_id", "transaction_fee", "discount", "net_total", "grand_total_bill", "total_credit_amt", "credit_amount_left", "customer_credit_date", "grand_total_credit_amount", "sale_by", "remarks" ];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
@@ -164,15 +197,16 @@ const createCreditBill = async (payload) => {
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "failure", "Financial year record not found");
         }
 
+        const status = 2;
         const bill_id = parseInt(maxBillId[0]?.bill_id || 0) + 1;
-        const { sales_id, purchase_id, sale_quantity, customer_id, credit_amount_left, credit_amount_paid, customer_credit_date, transaction_fee, card_no_upi_id, grand_total_bill, grand_total_credit_amount, payment_mode_status } = payload;
+        const { sales_id, purchase_id, sale_quantity, customer_id, credit_amount_left, credit_amount_paid, customer_credit_date, transaction_fee, card_no_upi_id, grand_total_bill, grand_total_credit_amount, payment_mode_status, location_id, sale_by, remarks } = payload;
         delete payload.transaction_fee;
         delete payload.payment_mode_status;
 
         payload = {
             ...payload,
             bill_id,
-            status: "1",
+            status: status,
             transaction_fee: 0,
             payment_mode_status: "6",
             cfin_yr: current_fin_year[0].year
@@ -188,6 +222,8 @@ const createCreditBill = async (payload) => {
         delete billPayload.customer_credit_date;
         delete billPayload.credit_amount_paid;
         delete billPayload.grand_total_credit_amount;
+        delete billPayload.sale_by;
+        delete billPayload.remarks;
 
         const createBillRes = await createCreditBillRecord(Object.keys(billPayload).toString(), Object.values(billPayload));
 
@@ -213,15 +249,22 @@ const createCreditBill = async (payload) => {
             isdownpayment: 0 
         };
 
+        const notificationRecordData = {
+            bill_id: bill_id,
+            notification_type: 2,
+            notify_by: sale_by,
+            location_id: location_id,
+            remarks: remarks,
+            status: status
+        }
+
         const [createCustomerCreditRes, createCustomerCreditHistoryRes] = await Promise.all([
             createCustomerCredit(Object.keys(customerCreditData).toString(), Object.values(customerCreditData)),
             createCustomerCreditHist(Object.keys(customerCreditHistoryData).toString(), Object.values(customerCreditHistoryData))
         ]);
-
         if (createCustomerCreditRes === "error") {
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating customer credit record");
         }
-
         if (createCustomerCreditHistoryRes === "error") {
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating customer credit history record");
         }
@@ -232,15 +275,24 @@ const createCreditBill = async (payload) => {
         });
 
         const purchaseResults = await Promise.all(purchasePromises);
-
         const failedPurchaseIndex = purchaseResults.findIndex(result => !result.affectedRows);
-
         if (failedPurchaseIndex !== -1) {
             const failedPurchaseId = purchase_id[failedPurchaseIndex];
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", `Stock exhausted for purchase_id: ${failedPurchaseId}`, { purchase_id: failedPurchaseId });
         }
 
-        const data = { bill_no: bill_id, status: 1, sales_id };
+        const notificationBillRes = await createNotificationRecord(Object.keys(notificationRecordData).toString(), Object.values(notificationRecordData));
+        if (notificationBillRes === "error") {
+            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating notification record");
+        }
+
+        const data = { 
+            bill_no: bill_id, 
+            status: status, 
+            sales_id 
+        };
+
+
         const [updateSaleRes] = await Promise.all([
             updateSalesRecordinBill(data)
         ]);
@@ -266,7 +318,7 @@ const createCreditBill = async (payload) => {
         const createBillCustomerRes = await createBillCustomerRecord(keys1, values);
 
 
-        return ApiResponse.response(resCode.RECORD_CREATED, "success", "Record inserted", payload);
+        return ApiResponse.response(resCode.REQUEST_SENT, "success", "Request Sent for admin to approve", payload);
 
     } catch (error) {
         console.error("Error in createBill:", error);
@@ -410,7 +462,7 @@ const createFinanceBill = async (payload) => {
 
 const createFinanceCreditBill = async (payload) => {
     try {
-        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "location_id",  "net_total", "downpayment_amt", "other_fee", "next_credit_date" ];
+        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "location_id",  "net_total", "downpayment_amt", "other_fee", "next_credit_date", "sale_by" ];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
@@ -433,15 +485,17 @@ const createFinanceCreditBill = async (payload) => {
         create finance record - all zero
         create customer credit record
         create customer credit history record
+        create notification record
         */
 
-        const { sales_id, purchase_id, sale_quantity, net_total, other_fee, financer_name, next_credit_date, downpayment_amt } = payload;
+        const status = 2;
+        const { sales_id, purchase_id, sale_quantity, net_total, other_fee, financer_name, next_credit_date, downpayment_amt, location_id, sale_by } = payload;
 
         payload = {
             ...payload,
             bill_id,
             grand_total_bill: parseInt(net_total) + parseInt(other_fee),
-            status: "1",
+            status: status,
             transaction_fee: 0,
             payment_mode_status: "5",
             cfin_yr: current_fin_year[0].year
@@ -458,6 +512,7 @@ const createFinanceCreditBill = async (payload) => {
         delete billPayload.downpayment_amt;
         delete billPayload.other_fee;
         delete billPayload.next_credit_date;
+        delete billPayload.sale_by;
 
         const createBillRes = await createCreditBillRecord(Object.keys(billPayload).toString(), Object.values(billPayload));
 
@@ -492,7 +547,22 @@ const createFinanceCreditBill = async (payload) => {
             next_credit_date: next_credit_date,
             isdownpayment: 0
         };
-        
+
+        const notificationRecordData = {
+            bill_id: bill_id,
+            notification_type: 2,
+            notify_by: sale_by,
+            location_id: location_id,
+            remarks: remarks,
+            status: status
+        }
+
+        // 1	Personal discount
+        // 2	Personal credit
+        // 3	Return bill
+        // 4	Extra expense
+        // 5	Cash debited
+	
         const financeBillRes = await createFinanceBillRecord(Object.keys(financeBillData).toString(), Object.values(financeBillData));
         if (financeBillRes === "error") {
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while finance bill record");
@@ -520,9 +590,18 @@ const createFinanceCreditBill = async (payload) => {
             const failedPurchaseId = purchase_id[failedPurchaseIndex];
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", `Stock exhausted for purchase_id: ${failedPurchaseId}`, { purchase_id: failedPurchaseId });
         }
+        
+        const notificationBillRes = await createNotificationRecord(Object.keys(notificationRecordData).toString(), Object.values(notificationRecordData));
+        if (notificationBillRes === "error") {
+            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating notification record");
+        }
 
         // update sales
-        const data = { bill_no: bill_id, status: 1, sales_id };
+        const data = { 
+            bill_no: bill_id, 
+            status: status, 
+            sales_id 
+        };
         const [updateSaleRes] = await Promise.all([
             updateSalesRecordinBill(data)
         ]);
@@ -535,14 +614,13 @@ const createFinanceCreditBill = async (payload) => {
         }
 
 
-        return ApiResponse.response(resCode.RECORD_CREATED, "success", "Record inserted", payload);
+        return ApiResponse.response(resCode.REQUEST_SENT, "success", "Request Sent for admin to approve", payload);
 
     } catch (error) {
         console.error("Error in createBill:", error);
         return ApiResponse.response(resCode.FAILED, "failure", "Unexpected error occurred");
     }
 }
-
 
 module.exports = {
     createBill,

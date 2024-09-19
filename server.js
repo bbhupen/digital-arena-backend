@@ -10,6 +10,7 @@ const purchaseRoute = require("./src/controllers/purchaseController");
 const saleRoute = require("./src/controllers/salesController");
 const locationRoute = require("./src/controllers/locationController");
 const billRoute = require("./src/controllers/billController");
+const notificationRoute = require("./src/controllers/notificationController");
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use("/", purchaseRoute);
 app.use("/", saleRoute);
 app.use("/", locationRoute);
 app.use("/", billRoute);
+app.use("/", notificationRoute);
 
 // Handle 404 - Not Found
 app.use((req, res, next) => {
