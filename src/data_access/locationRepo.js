@@ -14,7 +14,7 @@ const addCashToLocation = async (payload) => {
 }
 
 const subtractCashFromLocation = async (payload) => {
-    const locationQuery = `update ${locationTableName} set collectable_cash = collectable_cash - ${payload["cash_amount"]} where location_id = ${payload["location_id"]}`;
+    const locationQuery = `update ${locationTableName} set collectable_cash = collectable_cash - ${payload["cash_amount"]} where location_id = ${payload["location_id"]} and collectable_cash >= ${payload["cash_amount"]}`;
     const locationResults = await executeQuery(locationQuery);
     return locationResults;
 }

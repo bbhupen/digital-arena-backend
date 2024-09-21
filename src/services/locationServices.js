@@ -48,8 +48,13 @@ const collectAmountFromLocation = async (payload) => {
         }
 
         const locationRecord = await subtractCashFromLocation(locationData);
+
         if (locationRecord == "error"){
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred", [])
+        }
+
+        if (locationRecord.affectedRows == 0){
+            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "not enough amount to collect", [])
         }
 
         return ApiResponse.response(resCode.RECORD_CREATED, "success", "record_created", payload);
