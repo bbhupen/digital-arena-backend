@@ -14,6 +14,12 @@ const getBillRecordUsingCustomerID = async (payload) => {
     return billRecordResults;
 }
 
+const getBillRecordUsingBillId = async (payload) => {
+    const billRecordQuery = `SELECT * FROM ${billTableName} where bill_id = ?;`;
+    const billRecordResults = await executeQuery(billRecordQuery,[payload["bill_id"]]);
+    return billRecordResults;
+}
+
 const getCurrentFinYear = async () => {
     const currentFinYearQuery = `select year from ${finYearTableName} limit 1`;
     const currentFinYearResult = await executeQuery(currentFinYearQuery);
@@ -101,6 +107,7 @@ const createCashAndOnlineRecord = async(keys,data) => {
 
 module.exports = {
     getLatestBillId,
+    getBillRecordUsingBillId,
     getBillRecordUsingCustomerID,
     getCurrentFinYear,
     createBillRecord,

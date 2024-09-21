@@ -25,10 +25,11 @@ const updatePurchaseQuantity = async (data) => {
 
 }
 
+
 const addPurchaseQuantity = async (data) => {
     let condition = ``;
 
-    data.hasOwnProperty("sale_quantity") ? condition += `total_quantity_left= total_quantity_left - ${data["sale_quantity"]},` : ``;
+    data.hasOwnProperty("sale_quantity") ? condition += `total_quantity_left= total_quantity_left + ${data["sale_quantity"]},` : ``;
 
     const purchaseUpdateQuery = `UPDATE ${purchaseTableName} SET ${condition.slice(0, -1)} WHERE purchase_id="${data["purchase_id"]}" AND total_quantity_left >= ${data["sale_quantity"]};`;
     const purchaseUpdateRes = await executeQuery(purchaseUpdateQuery);

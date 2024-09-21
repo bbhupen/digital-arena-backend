@@ -6,6 +6,7 @@ const { updateSalesRecordinBill } = require("../data_access/salesRepo");
 const { updatePurchaseQuantity } = require("../data_access/purchaseRepo");
 const { searchCustomerUsingID, createBillCustomerRecord } = require("../data_access/customerRepo");
 const { createNotificationRecord } = require("../data_access/notificationRepo");
+const { addCashToLocation } = require("../data_access/locationRepo");
 
 const createBill = async (payload) => {
     try {
@@ -21,6 +22,7 @@ const createBill = async (payload) => {
         const maxBillId = await getLatestBillId();
         const bill_id = parseInt(maxBillId[0]?.bill_id || 0) + 1;
         const current_fin_year = await getCurrentFinYear();
+        var cash_amount = payload.grand_total_bill;
         var status = 1;
         var notification_type = 0;
 
@@ -48,7 +50,8 @@ const createBill = async (payload) => {
         if (personal_discount > 0) {
             personal_discount_status = 1;
             notification_type = 1;
-            grand_total_personal = parseInt(payload.grand_total_bill) - parseInt(personal_discount);    
+            grand_total_personal = parseInt(payload.grand_total_bill) - parseInt(personal_discount); 
+            cash_amount = grand_total_personal; 
         }
 
         // Remove unnecessary keys for the bill creation
@@ -72,6 +75,7 @@ const createBill = async (payload) => {
 
         // Create cash and online record
         if (payment_mode_status === "7"){
+            cash_amount = payload.cash_amt;
             cash_amt = payload.cash_amt;
             online_amt = payload.online_amt;
             online_payment_mode = payload.online_payment_mode;
@@ -139,8 +143,21 @@ const createBill = async (payload) => {
 
 
         // Return successful response
-        if (status > 1){
+        if (status == 2){
             return ApiResponse.response(resCode.REQUEST_SENT, "success", "Request Sent for admin to approve", payload);
+        }
+        else if (status == 1)
+        {
+            // Update Collectable Cash
+            const locationUpdateData = {
+                location_id: location_id,
+                cash_amount: cash_amount
+            }
+            const cashUpdateRes = await addCashToLocation(locationUpdateData);
+            if (cashUpdateRes == 'error'){
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+            }
+
         }
         
         return ApiResponse.response(resCode.RECORD_CREATED, "success", "Record inserted", payload);
