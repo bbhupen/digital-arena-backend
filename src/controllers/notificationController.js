@@ -4,7 +4,7 @@ const { manageNotification, getNotificationByNotificationType } = require('../se
 const router = express.Router()
 
 
-router.get("/api/v1/notification/get-by-type", async (req, res) => {
+router.post("/api/v1/notification/get-by-type", async (req, res) => {
   const requestBody = req.body;
   const response = await getNotificationByNotificationType(requestBody);
 
