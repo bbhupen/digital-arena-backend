@@ -7,6 +7,12 @@ const getLatestBillId = async () => {
     return billIDResults;
 }
 
+const getLatestBillIdUsingFinancialYear = async (payload) => {
+    const billIDQuery = `SELECT MAX(CAST(bill_sl_no AS UNSIGNED)) AS bill_sl_no FROM ${billTableName} where cfin_yr = ?;`;
+    const billIDResults = await executeQuery(billIDQuery,[payload["financial_year"]]);
+    return billIDResults;
+}
+
 const getBillRecordUsingCustomerID = async (payload) => {
     const billRecordQuery = `select b.bill_id,cb.name,b.grand_total_bill from ${billTableName} as b, ${billCustomerTableName} as cb where b.bill_id = cb.bill_id and cb.phno = ?;`
     // const billRecordQuery = `SELECT * FROM ${billTableName} where customer_id = ? order by inserted_at desc limit ${payload["start"]},10;`;
@@ -34,6 +40,7 @@ const createBillRecord = async (keys,data) => {
     valuesPlaceholder = valuesPlaceholder.slice(0, -1);
 
     const insertQuery = `insert into ${billTableName} (${keys}) values(${valuesPlaceholder})`;
+    console.log(insertQuery)
     const createBillResult = await executeQuery(insertQuery, data);
     return createBillResult;
 }
@@ -46,6 +53,7 @@ const createCreditBillRecord = async (keys,data) => {
     valuesPlaceholder = valuesPlaceholder.slice(0, -1);
 
     const insertQuery = `insert into ${billTableName} (${keys}) values(${valuesPlaceholder})`;
+    console.log(insertQuery)
     const createBillResult = await executeQuery(insertQuery, data);
     return createBillResult;
 }
@@ -106,6 +114,7 @@ const createCashAndOnlineRecord = async(keys,data) => {
 // }
 
 module.exports = {
+    getLatestBillIdUsingFinancialYear,
     getLatestBillId,
     getBillRecordUsingBillId,
     getBillRecordUsingCustomerID,

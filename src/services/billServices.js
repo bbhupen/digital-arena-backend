@@ -1,12 +1,13 @@
 const ApiResponse = require("../helpers/apiresponse");
 const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
-const { createBillRecord, getLatestBillId, getCurrentFinYear, getBillRecordUsingCustomerID, createCreditBillRecord, createCustomerCredit, createCustomerCreditHist, createFinanceBillRecord, createCashAndOnlineRecord } = require("../data_access/billRepo");
+const { createBillRecord, getLatestBillId, getCurrentFinYear, getBillRecordUsingCustomerID, createCreditBillRecord, createCustomerCredit, createCustomerCreditHist, createFinanceBillRecord, createCashAndOnlineRecord, getLatestBillIdUsingFinancialYear } = require("../data_access/billRepo");
 const { updateSalesRecordinBill } = require("../data_access/salesRepo");
 const { updatePurchaseQuantity } = require("../data_access/purchaseRepo");
 const { searchCustomerUsingID, createBillCustomerRecord } = require("../data_access/customerRepo");
 const { createNotificationRecord } = require("../data_access/notificationRepo");
 const { addCashToLocation } = require("../data_access/locationRepo");
+const { generateBillId } = require("../helpers/generateBillId");
 
 const createBill = async (payload) => {
     try {
@@ -17,18 +18,24 @@ const createBill = async (payload) => {
         if (!validation.valid) {
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters");
         }
-
         // Get the latest bill ID
-        const maxBillId = await getLatestBillId();
-        const bill_id = parseInt(maxBillId[0]?.bill_id || 0) + 1;
-        const current_fin_year = await getCurrentFinYear();
-        var cash_amount = payload.grand_total_bill;
-        var status = 1;
-        var notification_type = 0;
 
+
+
+        // bill id genration start
+        const current_fin_year = await getCurrentFinYear();
         if (!current_fin_year.length) {
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "failure", "Financial year record not found");
         }
+        const maxBillId = await getLatestBillIdUsingFinancialYear({ financial_year: current_fin_year[0].year });
+        var bill_sl_no = parseInt(maxBillId[0]?.bill_sl_no || 0) + 1;
+        const bill_id = generateBillId(current_fin_year[0].year, bill_sl_no);
+        // bill id generation end
+
+        
+        var cash_amount = 0;
+        var status = 1;
+        var notification_type = 0;
 
         // setting the status for the bill in case of credit or personal discount
         if (payload.payment_mode_status == "6" || payload.personal_discount > 0){
@@ -37,6 +44,7 @@ const createBill = async (payload) => {
 
         payload = {
             ...payload,
+            bill_sl_no,
             bill_id,
             status: status,
             cfin_yr: current_fin_year[0].year
@@ -51,7 +59,10 @@ const createBill = async (payload) => {
             personal_discount_status = 1;
             notification_type = 1;
             grand_total_personal = parseInt(payload.grand_total_bill) - parseInt(personal_discount); 
-            cash_amount = grand_total_personal; 
+            
+            if (payment_mode_status == "1"){
+                cash_amount = grand_total_personal;
+            }
         }
 
         // Remove unnecessary keys for the bill creation
@@ -74,6 +85,10 @@ const createBill = async (payload) => {
         }
 
         // Create cash and online record
+        if (payment_mode_status == "1"){
+            cash_amount = payload["grand_total_bill"];
+        }
+
         if (payment_mode_status === "7"){
             cash_amount = payload.cash_amt;
             cash_amt = payload.cash_amt;
@@ -205,8 +220,7 @@ const createCreditBill = async (payload) => {
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters");
         }
 
-        const [maxBillId, current_fin_year] = await Promise.all([
-            getLatestBillId(),
+        const [current_fin_year] = await Promise.all([
             getCurrentFinYear()
         ]);
 
@@ -215,7 +229,11 @@ const createCreditBill = async (payload) => {
         }
 
         const status = 2;
-        const bill_id = parseInt(maxBillId[0]?.bill_id || 0) + 1;
+
+        const maxBillId = await getLatestBillIdUsingFinancialYear({ financial_year: current_fin_year[0].year });
+        var bill_sl_no = parseInt(maxBillId[0]?.bill_sl_no || 0) + 1;
+        const bill_id = generateBillId(current_fin_year[0].year, bill_sl_no);
+
         const { sales_id, purchase_id, sale_quantity, customer_id, credit_amount_left, credit_amount_paid, customer_credit_date, transaction_fee, card_no_upi_id, grand_total_bill, grand_total_credit_amount, payment_mode_status, location_id, sale_by, remarks } = payload;
         delete payload.transaction_fee;
         delete payload.payment_mode_status;
@@ -223,6 +241,7 @@ const createCreditBill = async (payload) => {
         payload = {
             ...payload,
             bill_id,
+            bill_sl_no,
             status: status,
             transaction_fee: 0,
             payment_mode_status: "6",
@@ -243,7 +262,6 @@ const createCreditBill = async (payload) => {
         delete billPayload.remarks;
 
         const createBillRes = await createCreditBillRecord(Object.keys(billPayload).toString(), Object.values(billPayload));
-
         if (createBillRes === "error") {
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating bill");
         }
@@ -353,14 +371,15 @@ const createFinanceBill = async (payload) => {
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters");
         }
 
-        // Get the latest bill ID
-        const maxBillId = await getLatestBillId();
-        const bill_id = parseInt(maxBillId[0]?.bill_id || 0) + 1;
+        // bill id genration start
         const current_fin_year = await getCurrentFinYear();
-
         if (!current_fin_year.length) {
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "failure", "Financial year record not found");
         }
+        const maxBillId = await getLatestBillIdUsingFinancialYear({ financial_year: current_fin_year[0].year });
+        var bill_sl_no = parseInt(maxBillId[0]?.bill_sl_no || 0) + 1;
+        const bill_id = generateBillId(current_fin_year[0].year, bill_sl_no);
+        // bill id generation end
 
         const { sales_id, purchase_id, sale_quantity, customer_id, card_no_upi_id, downpayment_amt, dispersed_amt, transaction_fee, other_fee ,financer_name, payment_mode_status } = payload;
         let cash_amt = "";
@@ -373,6 +392,7 @@ const createFinanceBill = async (payload) => {
         payload = {
             ...payload,
             bill_id,
+            bill_sl_no,
             payment_mode_status: "5",
             status: "1",
             cfin_yr: current_fin_year[0].year
@@ -479,15 +499,14 @@ const createFinanceBill = async (payload) => {
 
 const createFinanceCreditBill = async (payload) => {
     try {
-        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "location_id",  "net_total", "downpayment_amt", "other_fee", "next_credit_date", "sale_by" ];
+        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "location_id",  "net_total", "downpayment_amt", "other_fee", "next_credit_date", "sale_by", "remarks" ];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters");
         }
 
-        const [maxBillId, current_fin_year] = await Promise.all([
-            getLatestBillId(),
+        const [current_fin_year] = await Promise.all([
             getCurrentFinYear()
         ]);
 
@@ -495,7 +514,11 @@ const createFinanceCreditBill = async (payload) => {
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "failure", "Financial year record not found");
         }
 
-        const bill_id = parseInt(maxBillId[0]?.bill_id || 0) + 1;
+        // bill id genration start
+        const maxBillId = await getLatestBillIdUsingFinancialYear({ financial_year: current_fin_year[0].year });
+        var bill_sl_no = parseInt(maxBillId[0]?.bill_sl_no || 0) + 1;
+        const bill_id = generateBillId(current_fin_year[0].year, bill_sl_no);
+        // bill id generation end
 
         /*
         create bill record - all zero
@@ -506,11 +529,12 @@ const createFinanceCreditBill = async (payload) => {
         */
 
         const status = 2;
-        const { sales_id, purchase_id, sale_quantity, net_total, other_fee, financer_name, next_credit_date, downpayment_amt, location_id, sale_by } = payload;
+        const { sales_id, purchase_id, sale_quantity, net_total, other_fee, financer_name, next_credit_date, downpayment_amt, location_id, sale_by, remarks } = payload;
 
         payload = {
             ...payload,
             bill_id,
+            bill_sl_no,
             grand_total_bill: parseInt(net_total) + parseInt(other_fee),
             status: status,
             transaction_fee: 0,
@@ -530,6 +554,7 @@ const createFinanceCreditBill = async (payload) => {
         delete billPayload.other_fee;
         delete billPayload.next_credit_date;
         delete billPayload.sale_by;
+        delete billPayload.remarks;
 
         const createBillRes = await createCreditBillRecord(Object.keys(billPayload).toString(), Object.values(billPayload));
 
