@@ -1,8 +1,8 @@
-const { userTableName } = require("../helpers/constant");
+const { userTableName, locationTableName } = require("../helpers/constant");
 const { executeQuery } = require("../helpers/db-utils");
 
 const selectUserUsingUsername = async (data) => {
-    const usersQuery = `SELECT * FROM ${userTableName} WHERE username = ?`;
+    const usersQuery = `SELECT * FROM ${userTableName} as u, ${locationTableName} as l WHERE u.location = l.location_id and u.username = ?`;
     const usersResults = await executeQuery(usersQuery, [data["username"]]);
     return usersResults;
 }

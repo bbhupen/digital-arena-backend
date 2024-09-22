@@ -11,6 +11,10 @@ const loginService = async (payload) => {
         let refreshToken = "";
         const mandateKeys = ["username", "password"];
         const validation = await validatePayload(payload, mandateKeys);
+        var role_id = "";
+        var location_id = "";
+        var location = "";
+
     
         if (!validation.valid) {
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters")
@@ -28,6 +32,12 @@ const loginService = async (payload) => {
 
         if (!isAuthenticated) {
             return ApiResponse.response(resCode.INVALID_USERNAME_PASSWORD, "failure", "invalid password or username")
+        }
+        else
+        {
+            role_id = user[0]['role_id'];
+            location_id = user[0]['location'];
+            location = user[0]['location_name'];
         }
 
         
@@ -52,7 +62,11 @@ const loginService = async (payload) => {
         const res = {
             "isAuthenticated": isAuthenticated,
             "accessToken": accessToken,
-            "refreshToken": savedToken[0].refresh_token
+            "refreshToken": savedToken[0].refresh_token,
+            "username": username,
+            "location_id": location_id,
+            "location_name": location,
+            "role_id": role_id
         }
 
         return ApiResponse.response(resCode.SUCCESS, "success", "auth successfull", res);
