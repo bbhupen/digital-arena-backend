@@ -8,7 +8,7 @@ function generateRandomPrefix(length) {
 }
 
 function generateBillId(yearRange, sequence) {
-    const randomPrefix = "APPDA"; // some fix prefix
+    const randomPrefix = "APP/DA"; // some fix prefix
     return `${randomPrefix}/${yearRange}/${sequence}`;
 }
 

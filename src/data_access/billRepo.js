@@ -105,6 +105,11 @@ const createCashAndOnlineRecord = async(keys,data) => {
     return createBillResult;
 }
 
+const getCashAndOnlineRecord = async (payload) => {
+    const cashAndOnlineRecordQuery = `select * from ${cashAndOnlineTableName} where bill_id = ?;`;
+    const cashAndOnlineRecordResults = await executeQuery(cashAndOnlineRecordQuery,[payload["bill_id"]]);
+    return cashAndOnlineRecordResults;
+}
 
 // const insertRefreshToken = async (data) => {
 //     const usersQuery = `update ${userTableName} set refresh_token = ? WHERE username = ?`;
@@ -123,5 +128,6 @@ module.exports = {
     createCustomerCredit,
     createCustomerCreditHist,
     createFinanceBillRecord,
-    createCashAndOnlineRecord
+    createCashAndOnlineRecord,
+    getCashAndOnlineRecord
 };

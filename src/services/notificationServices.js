@@ -3,9 +3,11 @@ const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
 const { selectNotificationUsingLocationStatus, selectNotificationRecordUsingNotificationType, updateNotificationRecord, selectNotificationRecordUsingId } = require("../data_access/notificationRepo");
 const { getPurchasesFromSalesUsingNotification, updateBillRecord, updateSalesRecord } = require("../data_access/joinRepos");
-const { getBillRecordUsingBillId } = require("../data_access/billRepo");
+const { getBillRecordUsingBillId, getCashAndOnlineRecord } = require("../data_access/billRepo");
 const { addCashToLocation } = require("../data_access/locationRepo");
 const { addPurchaseQuantity } = require("../data_access/purchaseRepo");
+const { getCreditHistDataUsingBill } = require("../data_access/creditHistRepo");
+const { getFinanceDataUsingBillId } = require("../data_access/financeRepo");
 
 const getNotificationByNotificationType = async (payload) => {
     try {
@@ -48,16 +50,57 @@ const manageNotification = async (payload) => {
         }
 
         const bill_id = purchasesFromSales[0]["bill_no"];
+        const billRes = await getBillRecordUsingBillId({bill_id: bill_id});
+        var bill_amount = 0;
 
         if (payload["action_type"] == "1"){ // accept notification
 
             // check the type of notification
-            // const notificationRes = await selectNotificationRecordUsingId({id: payload["notification_id"]});
+            const notificationRes = await selectNotificationRecordUsingId({id: payload["notification_id"]});
+            const notification_type = notificationRes[0]["notification_type"];
+            const personalDiscount = await billRes[0].personal_discount;
+            const payment_mode_status = await billRes[0].payment_mode_status;
 
-            // console.log(notificationRes[0]["notification_type"])
-            // // if (notificationRes[0]["notification_type"] == 1){
-            // //     console.log(1)
-            // // }
+            
+            if (notification_type == 1){
+                if (parseFloat(personalDiscount) > 0){ // if personal discount is applied
+                    if (payment_mode_status == 1){ // if cash payment
+                        bill_amount = billRes[0]["grand_total_personal"];
+                    }
+                    else if (payment_mode_status == 7){ // if cash and online payment
+                        const cashAndOnlineRes = await getCashAndOnlineRecord({bill_id: bill_id});
+                        bill_amount = cashAndOnlineRes[0]["cash_amt"];
+                    }
+                }
+            }
+            else if (notification_type == 2){
+                if (payment_mode_status == 6){
+                    // if payment mode status = 1 then add the cash to from customer_credit_rec history to location table
+                    const creditHistRes = await getCreditHistDataUsingBill({bill_id: bill_id});
+                    const creditPayMode = creditHistRes[0]["payment_mode_status"];
+                    if (creditPayMode == 1){
+                        bill_amount = creditHistRes[0]["grand_total"];
+                    }
+                }
+                else if (payment_mode_status == 5){
+                    // get the payment mode_status from finance table
+                    // if 1 ask them
+                    // if 6 get the payment mode status  and cash from the customer_credit_rec history
+                    // 
+                    const financeRes = await getFinanceDataUsingBillId({bill_id: bill_id});
+                    const financePayMode = financeRes[0]["payment_mode_status"];
+
+                    if (financePayMode == 6){
+                        const creditHistRes = await getCreditHistDataUsingBill({bill_id: bill_id});
+                        const creditPayMode = creditHistRes[0]["payment_mode_status"];
+                        if (creditPayMode == 1){
+                            bill_amount = creditHistRes[0]["grand_total"];
+                        }
+                    }
+                }
+            }
+
+            console.log(bill_amount, "bill_amount");
 
             const billUpdateData = {
                 bill_id: bill_id,
@@ -70,7 +113,7 @@ const manageNotification = async (payload) => {
             purchasesFromSales.map(async purchase => {    
                 const salesUpdateData = {
                     purchase_id: purchase.purchase_id,
-                    bill_no: purchase.bill_no,
+                    bill_no: bill_id,
                     status: 1
                 };
                 const salesUpdateRes = await updateSalesRecord(salesUpdateData);
@@ -78,18 +121,7 @@ const manageNotification = async (payload) => {
                     return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
                 }
             });
-
-            const billRes = await getBillRecordUsingBillId({bill_id: bill_id});
-            const personalDiscount = billRes[0]["personal_discount"];
-            var bill_amount = 0;
-
-            if (personalDiscount > 0){
-                bill_amount =  billRes[0]["grand_total_personal"];
-            }
-            else
-            {
-                bill_amount = billRes[0]["grand_total_bill"];
-            }
+            
             const locationUpdateData = {
                 location_id: billRes[0]["location_id"],
                 cash_amount: bill_amount
@@ -159,7 +191,7 @@ const manageNotification = async (payload) => {
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters", [])
         }
         
-        return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", purchasesFromSales);
+        return ApiResponse.response(resCode.RECORD_CREATED, "success", "record_found", purchasesFromSales);
 
     } catch (error) {
         console.log(error)

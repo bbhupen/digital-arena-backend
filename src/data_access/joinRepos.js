@@ -25,7 +25,6 @@ const updateSalesRecord = async (data) => {
 
     const updateQuery = `UPDATE ${saleTableName} SET ${condition.slice(0, -1)} WHERE bill_no="${data["bill_no"]}" and purchase_id="${data["purchase_id"]}";`;
     const updateRes = await executeQuery(updateQuery);
-    console.log(updateQuery)
     return updateRes;
 }
 

@@ -499,7 +499,7 @@ const createFinanceBill = async (payload) => {
 
 const createFinanceCreditBill = async (payload) => {
     try {
-        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "location_id",  "net_total", "downpayment_amt", "dispersed_amt", "card_no_upi_id", "other_fee", "total_credit_amt", "credit_amount_left", "payment_mode_status", "next_credit_date", "sale_by", "remarks" ];
+        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "location_id",  "net_total", "downpayment_amt", "dispersed_amt", "card_no_upi_id", "other_fee", "total_credit_amt", "credit_amount_left", "payment_mode_status", "credit_amount_paid", "grand_total_credit_amount", "next_credit_date", "payment_mode_status", "transaction_fee", "sale_by", "remarks" ];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
@@ -529,7 +529,7 @@ const createFinanceCreditBill = async (payload) => {
         */
 
         const status = 2;
-        const { sales_id, purchase_id, sale_quantity, net_total, other_fee, financer_name, next_credit_date, downpayment_amt, location_id, sale_by, remarks, payment_mode_status, card_no_upi_id, dispersed_amt, total_credit_amt, credit_amount_left } = payload;
+        const { sales_id, purchase_id, sale_quantity, net_total, other_fee, financer_name, next_credit_date, downpayment_amt, location_id, sale_by, remarks, payment_mode_status, card_no_upi_id, dispersed_amt, total_credit_amt, credit_amount_left, credit_amount_paid, transaction_fee, grand_total_credit_amount } = payload;
 
         payload = {
             ...payload,
@@ -559,6 +559,8 @@ const createFinanceCreditBill = async (payload) => {
         delete billPayload.dispersed_amt;
         delete billPayload.credit_amount_left;
         delete billPayload.total_credit_amt;
+        delete billPayload.credit_amount_paid;
+        delete billPayload.grand_total_credit_amount;
 
         const createBillRes = await createCreditBillRecord(Object.keys(billPayload).toString(), Object.values(billPayload));
 
@@ -587,9 +589,9 @@ const createFinanceCreditBill = async (payload) => {
             bill_id: bill_id, 
             payment_mode_status: payment_mode_status, 
             card_no_upi_id: card_no_upi_id,
-            transaction_fee: 0, 
-            total_given: 0, 
-            grand_total: 0, 
+            transaction_fee: transaction_fee,
+            total_given: credit_amount_paid, 
+            grand_total: grand_total_credit_amount, 
             next_credit_date: next_credit_date,
             isdownpayment: 0
         };

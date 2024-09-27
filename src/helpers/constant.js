@@ -11,6 +11,7 @@ const customerCreditHistTableName = "customer_credit_rec_hist";
 const financeBillTableName = "customer_finance";
 const cashAndOnlineTableName = "cash_and_online";
 const notificationTableName = "notification";
+const creditHistTableName = "customer_credit_rec_hist";
 
 module.exports = {
     userTableName,
@@ -25,5 +26,6 @@ module.exports = {
     customerCreditHistTableName,
     financeBillTableName,
     cashAndOnlineTableName,
-    notificationTableName
+    notificationTableName,
+    creditHistTableName
 }
