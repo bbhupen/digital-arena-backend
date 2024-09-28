@@ -529,7 +529,7 @@ const createFinanceCreditBill = async (payload) => {
         */
 
         const status = 2;
-        const { sales_id, purchase_id, sale_quantity, net_total, other_fee, financer_name, next_credit_date, downpayment_amt, location_id, sale_by, remarks, payment_mode_status, card_no_upi_id, dispersed_amt, total_credit_amt, credit_amount_left, credit_amount_paid, transaction_fee, grand_total_credit_amount } = payload;
+        const { sales_id, purchase_id, sale_quantity, net_total, other_fee, financer_name, next_credit_date, downpayment_amt, location_id, sale_by, remarks, payment_mode_status, card_no_upi_id, dispersed_amt, total_credit_amt, credit_amount_left, credit_amount_paid, transaction_fee, grand_total_credit_amount, customer_id } = payload;
 
         payload = {
             ...payload,
@@ -660,6 +660,19 @@ const createFinanceCreditBill = async (payload) => {
         if (updateSaleRes === "error") {
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while updating sales record");
         }
+
+        const billCustomerData = (await searchCustomerUsingID({ customer_id }))[0];
+        delete billCustomerData.customer_id;
+        delete billCustomerData.inserted_at;
+        billCustomerData["bill_id"] = bill_id;
+
+        const keys1 = Object.keys(billCustomerData).toString();
+        const values = Object.keys(billCustomerData)
+            .map((key) =>
+                billCustomerData[key]
+            )
+
+        const createBillCustomerRes = await createBillCustomerRecord(keys1, values);
 
 
         return ApiResponse.response(resCode.REQUEST_SENT, "success", "Request Sent for admin to approve", payload);
