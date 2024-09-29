@@ -52,7 +52,6 @@ const createCreditBillRecord = async (keys,data) => {
     valuesPlaceholder = valuesPlaceholder.slice(0, -1);
 
     const insertQuery = `insert into ${billTableName} (${keys}) values(${valuesPlaceholder})`;
-    console.log(insertQuery)
     const createBillResult = await executeQuery(insertQuery, data);
     return createBillResult;
 }
