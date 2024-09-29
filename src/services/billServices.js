@@ -12,7 +12,7 @@ const { generateBillId } = require("../helpers/generateBillId");
 const createBill = async (payload) => {
     try {
         // Validate payload
-        const mandateKeys = ["customer_id", "sales_id", "location_id", "card_no_upi_id", "payment_mode_status", "transaction_fee", "net_total", "grand_total_bill", "personal_discount", "sale_by", "remarks"];
+        const mandateKeys = ["customer_id", "sales_id", "location_id", "card_no_upi_id", "payment_mode_status", "transaction_fee", "net_total", "grand_total_bill", "personal_discount", "sale_by"];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
@@ -36,9 +36,17 @@ const createBill = async (payload) => {
         var cash_amount = 0;
         var status = 1;
         var notification_type = 0;
+        var remarks = "";
 
         // setting the status for the bill in case of credit or personal discount
         if (payload.payment_mode_status == "6" || payload.personal_discount > 0){
+            const mandateKeys = ["customer_id", "sales_id", "location_id", "card_no_upi_id", "payment_mode_status", "transaction_fee", "net_total", "grand_total_bill", "personal_discount", "sale_by", "remarks"];
+            const validation = await validatePayload(payload, mandateKeys);
+
+            if (!validation.valid) {
+                return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters");
+            }
+            remarks = payload.remarks;
             status = 2;
         }
 
@@ -50,7 +58,7 @@ const createBill = async (payload) => {
             cfin_yr: current_fin_year[0].year
         };
 
-        const { sales_id, purchase_id, sale_quantity, customer_id, payment_mode_status, personal_discount, location_id, sale_by, remarks } = payload;
+        const { sales_id, purchase_id, sale_quantity, customer_id, payment_mode_status, personal_discount, location_id, sale_by } = payload;
         let online_payment_mode = "";
         let grand_total_personal = 0;
         let personal_discount_status = 0;
@@ -213,7 +221,7 @@ const searchBillUsingCustomerId = async (payload) =>{
 
 const createCreditBill = async (payload) => {
     try {
-        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "payment_mode_status", "location_id", "card_no_upi_id", "transaction_fee", "net_total", "grand_total_bill", "total_credit_amt", "credit_amount_left", "customer_credit_date", "grand_total_credit_amount", "sale_by", "remarks" ];
+        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "payment_mode_status", "location_id", "card_no_upi_id", "transaction_fee", "net_total", "grand_total_bill", "total_credit_amt", "credit_amount_left", "customer_credit_date", "grand_total_credit_amount", "sale_by" ];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
