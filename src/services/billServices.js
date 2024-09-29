@@ -289,7 +289,8 @@ const createCreditBill = async (payload) => {
             total_given: credit_amount_paid, 
             grand_total: grand_total_credit_amount, 
             next_credit_date: customer_credit_date,
-            isdownpayment: 0 
+            updated_by: sale_by,
+            isdownpayment: 1 
         };
 
         const notificationRecordData = {
