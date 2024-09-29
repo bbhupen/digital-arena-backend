@@ -537,8 +537,13 @@ const createFinanceCreditBill = async (payload) => {
         create notification record
         */
 
+        var isdownpayment = 0;
         const status = 2;
         const { sales_id, purchase_id, sale_quantity, net_total, other_fee, financer_name, next_credit_date, downpayment_amt, location_id, sale_by, remarks, payment_mode_status, card_no_upi_id, dispersed_amt, total_credit_amt, credit_amount_left, credit_amount_paid, transaction_fee, grand_total_credit_amount, customer_id } = payload;
+
+        if (credit_amount_paid > 0){
+            isdownpayment = 1;
+        }
 
         payload = {
             ...payload,
@@ -602,7 +607,8 @@ const createFinanceCreditBill = async (payload) => {
             total_given: credit_amount_paid, 
             grand_total: grand_total_credit_amount, 
             next_credit_date: next_credit_date,
-            isdownpayment: 0
+            updated_by: sale_by,
+            isdownpayment: isdownpayment
         };
 
         const notificationRecordData = {
