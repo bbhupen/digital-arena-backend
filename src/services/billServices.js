@@ -380,6 +380,8 @@ const createFinanceBill = async (payload) => {
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters");
         }
 
+        var cash_amount = 0;
+
         // bill id genration start
         const current_fin_year = await getCurrentFinYear();
         if (!current_fin_year.length) {
@@ -390,7 +392,7 @@ const createFinanceBill = async (payload) => {
         const bill_id = generateBillId(current_fin_year[0].year, bill_sl_no);
         // bill id generation end
 
-        const { sales_id, purchase_id, sale_quantity, customer_id, card_no_upi_id, downpayment_amt, dispersed_amt, transaction_fee, other_fee ,financer_name, payment_mode_status } = payload;
+        const { sales_id, purchase_id, sale_quantity, customer_id, card_no_upi_id, downpayment_amt, dispersed_amt, transaction_fee, other_fee ,financer_name, payment_mode_status, location_id } = payload;
         let cash_amt = "";
         let online_amt = "";
         let online_payment_mode = "";
@@ -420,15 +422,22 @@ const createFinanceBill = async (payload) => {
         delete billPayload.dispersed_amt;
 
 
+
         // Create cash and online record
+        
+        if (payment_mode_status == "1"){
+            cash_amount = payload["grand_total_bill"];
+        }
+
         if (payment_mode_status === "7"){
+            cash_amount = payload.cash_amt;
             cash_amt = payload.cash_amt;
             online_amt = payload.online_amt;
             online_payment_mode = payload.online_payment_mode;
     
             const cash_and_online_data = { bill_id, cash_amt, online_amt, online_payment_mode };
             const createCashAndOnlineRes = await createCashAndOnlineRecord(Object.keys(cash_and_online_data).toString(), Object.values(cash_and_online_data));
-    
+
             if (createCashAndOnlineRes === "error") {
                 return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating cash and online record");
             }
@@ -463,7 +472,6 @@ const createFinanceBill = async (payload) => {
         }
 
         const data = { bill_no: bill_id, status: 1, sales_id };
-
         // Update purchase stock
         for (let i = 0; i < purchase_id.length; i++) {
             const updatePurchaseData = { purchase_id: purchase_id[i], sale_quantity: sale_quantity[i] };
@@ -482,6 +490,17 @@ const createFinanceBill = async (payload) => {
         if (updateSaleRes === "error") {
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while updating sales record");
         }
+
+        // Update Collectable Cash
+        const locationUpdateData = {
+            location_id: location_id,
+            cash_amount: cash_amount
+        }
+        const cashUpdateRes = await addCashToLocation(locationUpdateData);
+        if (cashUpdateRes == 'error'){
+            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+        }
+            
 
         const billCustomerData = (await searchCustomerUsingID({ customer_id }))[0];
         delete billCustomerData.customer_id;
