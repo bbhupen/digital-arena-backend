@@ -372,6 +372,7 @@ const createCreditBill = async (payload) => {
 
 const createFinanceBill = async (payload) => {
     try {
+        console.log(payload);
         // Validate payload
         const mandateKeys = ["customer_id", "sales_id", "payment_mode_status", "card_no_upi_id", "financer_name", "location_id", "transaction_fee", "net_total", "grand_total_bill", "downpayment_amt", "dispersed_amt", "other_fee" ];
         const validation = await validatePayload(payload, mandateKeys);
