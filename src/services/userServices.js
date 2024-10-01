@@ -1,5 +1,5 @@
 const { selectUserUsingUsername, insertRefreshToken, selectRefreshTokenUsingUsernameToken, selectRefreshTokenUsingUsername } = require("../data_access/userRepo");
-const { toMD5, validatePayload } = require("../helpers/utils");
+const { toMD5, validatePayload, hashPassword } = require("../helpers/utils");
 const jwt = require('jsonwebtoken');
 const ApiResponse = require("../helpers/apiresponse");
 const resCode = require("../helpers/responseCodes");
@@ -21,7 +21,8 @@ const loginService = async (payload) => {
         }
         const { username, password } = payload;
 
-        const inputPassword = await toMD5(password);
+        // const inputPassword = await toMD5(password);
+        const inputPassword = await hashPassword(password.trim());
         const user = await selectUserUsingUsername(payload);
 
         if (!user.length){

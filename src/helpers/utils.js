@@ -9,6 +9,20 @@ const toMD5 = async (password) => {
     return crypto.createHash('md5').update(password).digest('hex');
 }
 
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+
+    // Hash the input password using SHA-1
+    const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+
+    // Convert ArrayBuffer to hex string
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(byte => byte.toString(16).padStart(2, '0')).join('');
+
+    return hashHex;
+}
+
 const validatePayload = async (payload, requiredFields) => {
     const hasRequiredFields = requiredFields.every(prop => payload.hasOwnProperty(prop));
     if (!hasRequiredFields) {
@@ -43,5 +57,6 @@ const validatePayload = async (payload, requiredFields) => {
 module.exports = {
     getTimestamp,
     toMD5,
-    validatePayload
+    validatePayload,
+    hashPassword
 }
