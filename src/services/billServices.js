@@ -221,7 +221,7 @@ const searchBillUsingCustomerId = async (payload) =>{
 
 const createCreditBill = async (payload) => {
     try {
-        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "payment_mode_status", "location_id", "card_no_upi_id", "transaction_fee", "net_total", "grand_total_bill", "total_credit_amt", "credit_amount_left", "customer_credit_date", "grand_total_credit_amount", "sale_by" ];
+        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "payment_mode_status", "location_id", "card_no_upi_id", "transaction_fee", "net_total", "grand_total_bill", "total_credit_amt", "credit_amount_left", "customer_credit_date", "grand_total_credit_amount", "sale_by", "credit_amount_paid" ];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
@@ -242,10 +242,14 @@ const createCreditBill = async (payload) => {
         var bill_sl_no = parseInt(maxBillId[0]?.bill_sl_no || 0) + 1;
         const bill_id = generateBillId(current_fin_year[0].year, bill_sl_no);
 
-        const { sales_id, purchase_id, sale_quantity, customer_id, credit_amount_left, credit_amount_paid, customer_credit_date, transaction_fee, card_no_upi_id, grand_total_bill, grand_total_credit_amount, payment_mode_status, location_id, sale_by, remarks } = payload;
+        const { sales_id, purchase_id, sale_quantity, customer_id, credit_amount_left, credit_amount_paid, customer_credit_date, transaction_fee, card_no_upi_id, grand_total_bill, grand_total_credit_amount, location_id, sale_by, remarks } = payload;
+        var { payment_mode_status } = payload;
         delete payload.transaction_fee;
         delete payload.payment_mode_status;
 
+        if (credit_amount_paid == "0"){
+            payment_mode_status = 0;
+        }
         payload = {
             ...payload,
             bill_id,
@@ -372,7 +376,6 @@ const createCreditBill = async (payload) => {
 
 const createFinanceBill = async (payload) => {
     try {
-        console.log(payload);
         // Validate payload
         const mandateKeys = ["customer_id", "sales_id", "payment_mode_status", "card_no_upi_id", "financer_name", "location_id", "transaction_fee", "net_total", "grand_total_bill", "downpayment_amt", "dispersed_amt", "other_fee" ];
         const validation = await validatePayload(payload, mandateKeys);
@@ -528,7 +531,7 @@ const createFinanceBill = async (payload) => {
 
 const createFinanceCreditBill = async (payload) => {
     try {
-        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "location_id",  "net_total", "downpayment_amt", "dispersed_amt", "card_no_upi_id", "other_fee", "total_credit_amt", "credit_amount_left", "payment_mode_status", "credit_amount_paid", "grand_total_credit_amount", "next_credit_date", "payment_mode_status", "transaction_fee", "sale_by", "remarks" ];
+        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "location_id",  "net_total", "downpayment_amt", "dispersed_amt", "card_no_upi_id", "other_fee", "total_credit_amt", "credit_amount_left", "payment_mode_status", "credit_amount_paid", "grand_total_credit_amount", "next_credit_date", "transaction_fee", "sale_by", "remarks" ];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
@@ -559,9 +562,15 @@ const createFinanceCreditBill = async (payload) => {
 
         var isdownpayment = 0;
         const status = 2;
-        const { sales_id, purchase_id, sale_quantity, net_total, other_fee, financer_name, next_credit_date, downpayment_amt, location_id, sale_by, remarks, payment_mode_status, card_no_upi_id, dispersed_amt, total_credit_amt, credit_amount_left, credit_amount_paid, transaction_fee, grand_total_credit_amount, customer_id } = payload;
+        const { sales_id, purchase_id, sale_quantity, net_total, other_fee, financer_name, next_credit_date, downpayment_amt, location_id, sale_by, remarks, card_no_upi_id, dispersed_amt, total_credit_amt, credit_amount_left, credit_amount_paid, transaction_fee, grand_total_credit_amount, customer_id } = payload;
 
-        if (credit_amount_paid > 0){
+        var { payment_mode_status } = payload;
+
+        if (credit_amount_paid == "0"){
+            payment_mode_status = 0;
+        }
+
+        if (parseFloat(credit_amount_paid) > 0){
             isdownpayment = 1;
         }
 
