@@ -242,14 +242,20 @@ const createCreditBill = async (payload) => {
         var bill_sl_no = parseInt(maxBillId[0]?.bill_sl_no || 0) + 1;
         const bill_id = generateBillId(current_fin_year[0].year, bill_sl_no);
 
-        const { sales_id, purchase_id, sale_quantity, customer_id, credit_amount_left, credit_amount_paid, customer_credit_date, transaction_fee, card_no_upi_id, grand_total_bill, grand_total_credit_amount, location_id, sale_by, remarks } = payload;
-        var { payment_mode_status } = payload;
+        const { sales_id, purchase_id, sale_quantity, customer_id, credit_amount_left, credit_amount_paid, customer_credit_date, grand_total_bill, location_id, sale_by, remarks } = payload;
+        var { payment_mode_status, transaction_fee, card_no_upi_id, grand_total_credit_amount } = payload;
+        var isdownpayment = 1;
         delete payload.transaction_fee;
         delete payload.payment_mode_status;
 
         if (credit_amount_paid == "0"){
+            transaction_fee = 0;
             payment_mode_status = 0;
+            card_no_upi_id = "NA";
+            grand_total_credit_amount = 0;
+            isdownpayment = 0;
         }
+
         payload = {
             ...payload,
             bill_id,
@@ -294,7 +300,7 @@ const createCreditBill = async (payload) => {
             grand_total: grand_total_credit_amount, 
             next_credit_date: customer_credit_date,
             updated_by: sale_by,
-            isdownpayment: 1 
+            isdownpayment: isdownpayment
         };
 
         const notificationRecordData = {
@@ -560,18 +566,18 @@ const createFinanceCreditBill = async (payload) => {
         create notification record
         */
 
-        var isdownpayment = 0;
+        var isdownpayment = 1;
         const status = 2;
-        const { sales_id, purchase_id, sale_quantity, net_total, other_fee, financer_name, next_credit_date, downpayment_amt, location_id, sale_by, remarks, card_no_upi_id, dispersed_amt, total_credit_amt, credit_amount_left, credit_amount_paid, transaction_fee, grand_total_credit_amount, customer_id } = payload;
+        const { sales_id, purchase_id, sale_quantity, net_total, other_fee, financer_name, next_credit_date, downpayment_amt, location_id, sale_by, remarks, dispersed_amt, total_credit_amt, credit_amount_left, credit_amount_paid, customer_id } = payload;
 
-        var { payment_mode_status } = payload;
+        var { payment_mode_status, transaction_fee, card_no_upi_id, grand_total_credit_amount } = payload;
 
         if (credit_amount_paid == "0"){
+            transaction_fee = 0;
             payment_mode_status = 0;
-        }
-
-        if (parseFloat(credit_amount_paid) > 0){
-            isdownpayment = 1;
+            card_no_upi_id = "NA";
+            grand_total_credit_amount = 0;
+            isdownpayment = 0;
         }
 
         payload = {
