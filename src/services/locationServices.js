@@ -1,4 +1,4 @@
-const { getAllLocationRecord, addCashToLocation, subtractCashFromLocation } = require("../data_access/locationRepo");
+const { getAllLocationRecord, addCashToLocation, subtractCashFromLocation, getLocationDetails } = require("../data_access/locationRepo");
 const { createNotificationRecord } = require("../data_access/notificationRepo");
 const ApiResponse = require("../helpers/apiresponse");
 const resCode = require("../helpers/responseCodes");
@@ -28,12 +28,15 @@ const collectAmountFromLocation = async (payload) => {
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters", [])
         }
 
+        const locationDetails = await getLocationDetails(payload["location_id"]);
+        const locationName = locationDetails[0]["location_name"];
+
         const notificationData = {
             bill_id: "NA",
             notification_type: 5,
             notify_by: payload["collected_by"],
             location_id: payload["location_id"],
-            remarks: payload["amount"] + " amount collected from location",
+            remarks: payload["amount"] + " amount collected from " + locationName + " by " + payload["collected_by"],
             status: 1
         }
 

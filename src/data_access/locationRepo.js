@@ -7,6 +7,12 @@ const getAllLocationRecord = async () => {
     return locationResults;
 }
 
+const getLocationDetails = async (location_id) => {
+    const locationQuery = `SELECT * from ${locationTableName} where location_id = ${location_id}`;
+    const locationResults = await executeQuery(locationQuery);
+    return locationResults;
+}
+
 const addCashToLocation = async (payload) => {
     const locationQuery = `update ${locationTableName} set collectable_cash = collectable_cash + ${payload["cash_amount"]} where location_id = ${payload["location_id"]}`;
     const locationResults = await executeQuery(locationQuery);
@@ -20,6 +26,7 @@ const subtractCashFromLocation = async (payload) => {
 }
 
 module.exports = {
+    getLocationDetails,
     subtractCashFromLocation,
     getAllLocationRecord,
     addCashToLocation
