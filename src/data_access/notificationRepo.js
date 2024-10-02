@@ -14,9 +14,9 @@ const selectNotificationUsingLocationStatus = async (data) => {
 }
 
 const selectNotificationRecordUsingNotificationType = async (data) => {
-    const notificationQuery = `SELECT l.location_name, n.id, n.bill_id, nt.name, n.remarks, n.notify_by  FROM ${notificationTableName} as n, ${locationTableName} as l, notification_type as nt WHERE n.notification_type = nt.id and n.location_id = l.location_id and n.notification_type = ? and l.location_id = ? and n.status = 2 order by inserted_at desc`;
+    const notificationQuery = `SELECT l.location_name, n.id, n.bill_id, nt.name, n.remarks, n.notify_by  FROM ${notificationTableName} as n, ${locationTableName} as l, notification_type as nt WHERE n.notification_type = nt.id and n.location_id = l.location_id and n.notification_type = ? and n.status = 2 order by inserted_at desc`;
     const notificationResults = await executeQuery(notificationQuery, [data["notification_type"], data["location_id"]]);
-    return notificationResults;
+    return notificationResults; 
 }
 
 const updateNotificationRecord = async (data) => {

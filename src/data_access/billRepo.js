@@ -14,7 +14,7 @@ const getLatestBillIdUsingFinancialYear = async (payload) => {
 }
 
 const getBillRecordUsingCustomerID = async (payload) => {
-    const billRecordQuery = `select b.bill_id,cb.name,b.grand_total_bill from ${billTableName} as b, ${billCustomerTableName} as cb where b.bill_id = cb.bill_id and cb.phno = ? order by b.inserted_at desc;`
+    const billRecordQuery = `select b.bill_id,cb.name,b.grand_total_bill from ${billTableName} as b, ${billCustomerTableName} as cb where b.bill_id = cb.bill_id and cb.phno = ? and b.status = 1 order by b.inserted_at desc;`
     // const billRecordQuery = `SELECT * FROM ${billTableName} where customer_id = ? order by inserted_at desc limit ${payload["start"]},10;`;
     const billRecordResults = await executeQuery(billRecordQuery,[payload["customer_id"]]);
     return billRecordResults;
