@@ -1,4 +1,5 @@
-const { getPurchaseByID, updatePurchasePhysicallyVerified } = require("../data_access/purchaseRepo");
+const { getLocationDetails, getLocationById } = require("../data_access/locationRepo");
+const { getPurchaseByID, updatePurchasePhysicallyVerified, updatePurchaseLocationID } = require("../data_access/purchaseRepo");
 const ApiResponse = require("../helpers/apiresponse");
 const resCode = require("../helpers/responseCodes");
 const { validatePayload } = require("../helpers/utils");
@@ -59,7 +60,41 @@ const physicallyVerifyPurchase = async (payload) => {
 
 }
 
+const updatePurchaseLocation = async (payload) => {
+    try {
+        const mandateKeys = ["purchase_id", "location_id"];
+        const validation = await validatePayload(payload, mandateKeys);
+
+        if (!validation.valid){
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters", {})
+        }
+
+        const purchaseRecord = await getPurchaseByID(payload);
+        if (!purchaseRecord){
+            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no purchase record found", {});
+        }
+
+        const locationRecord = await getLocationById(payload["location_id"]);
+        if (!locationRecord){
+            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no location record found", {});
+        }
+
+        const isUpdated = await updatePurchaseLocationID(payload);
+        if (isUpdated=="error"){
+            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred", {})
+        }
+
+        return ApiResponse.response(resCode.RECORD_MODIFIED, "success", "purchase location updated", {});
+
+
+    } catch (error) {
+        console.log(error)
+        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+    }
+}
+
 module.exports = {
     getPurchaseDetails,
-    physicallyVerifyPurchase
+    physicallyVerifyPurchase,
+    updatePurchaseLocation
 };
