@@ -1,7 +1,7 @@
 const ApiResponse = require("../helpers/apiresponse");
 const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
-const { selectNotificationUsingLocationStatus, selectNotificationRecordUsingNotificationType, updateNotificationRecord, selectNotificationRecordUsingId, createNotificationRecord } = require("../data_access/notificationRepo");
+const { selectNotificationUsingLocationStatus, selectNotificationRecordUsingNotificationType, updateNotificationRecord, selectNotificationRecordUsingId } = require("../data_access/notificationRepo");
 const { getPurchasesFromSalesUsingNotification, updateBillRecord, updateSalesRecord } = require("../data_access/joinRepos");
 const { getBillRecordUsingBillId, getCashAndOnlineRecord } = require("../data_access/billRepo");
 const { addCashToLocation } = require("../data_access/locationRepo");
@@ -58,7 +58,6 @@ const manageNotification = async (payload) => {
             // check the type of notification
             const notificationRes = await selectNotificationRecordUsingId({id: payload["notification_id"]});
             const notification_type = notificationRes[0]["notification_type"];
-            const location_id = notificationRes[0]["location_id"];
             const personalDiscount = await billRes[0].personal_discount;
             const payment_mode_status = await billRes[0].payment_mode_status;
 
@@ -104,6 +103,8 @@ const manageNotification = async (payload) => {
                 }
             }
 
+            console.log(bill_amount, "bill_amount");
+
             const billUpdateData = {
                 bill_id: bill_id,
                 status: 1
@@ -131,20 +132,6 @@ const manageNotification = async (payload) => {
             const cashUpdateRes = await addCashToLocation(locationUpdateData);
             if (cashUpdateRes == 'error'){
                 return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
-            }
-
-            const cashAddNotification = {
-                bill_id: bill_id,
-                notification_type: 6,
-                notify_by: "NA",
-                location_id: location_id,
-                remarks: "Cash Added " + bill_amount,
-                status: 1
-            }
-    
-            const cashAddNotiRes = await createNotificationRecord(Object.keys(cashAddNotification).toString(), Object.values(cashAddNotification));
-            if (cashAddNotiRes === "error") {
-                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating notification record");
             }
 
             const updateNotificationRes = await updateNotificationRecord({status: 1, id: payload["notification_id"]});
@@ -194,6 +181,7 @@ const manageNotification = async (payload) => {
             if (updateNotificationRes == 'error'){
                 return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
             }
+
 
             // if notification type =  reject then update the status to 0
             // -- add the purchase quantity to the purchase table
