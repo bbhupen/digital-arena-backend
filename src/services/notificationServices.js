@@ -91,10 +91,13 @@ const manageNotification = async (payload) => {
                     const financeRes = await getFinanceDataUsingBillId({bill_id: bill_id});
                     const financePayMode = financeRes[0]["payment_mode_status"];
 
-                    if (financePayMode == 6){
+                    if (financePayMode == 1){ // cash
+                        bill_amount = financeRes[0]["downpayment_amt"];
+                    }
+                    else if (financePayMode == 6){ // credit
                         const creditHistRes = await getCreditHistDataUsingBill({bill_id: bill_id});
                         const creditPayMode = creditHistRes[0]["payment_mode_status"];
-                        if (creditPayMode == 1){
+                        if (creditPayMode == 1){ // cash
                             bill_amount = creditHistRes[0]["grand_total"];
                         }
                     }

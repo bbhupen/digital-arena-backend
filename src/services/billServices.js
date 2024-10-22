@@ -66,7 +66,7 @@ const createBill = async (payload) => {
         if (personal_discount > 0) {
             personal_discount_status = 1;
             notification_type = 1;
-            grand_total_personal = parseInt(payload.grand_total_bill) - parseInt(personal_discount); 
+            grand_total_personal = parseFloat(payload.grand_total_bill) - parseFloat(personal_discount); 
             
             if (payment_mode_status == "1"){
                 cash_amount = grand_total_personal;
@@ -669,7 +669,7 @@ const createFinanceCreditBill = async (payload) => {
             card_no_upi_id: card_no_upi_id,
             transaction_fee: transaction_fee,
             total_given: credit_amount_paid, 
-            grand_total: grand_total_credit_amount, 
+            grand_total: parseFloat(credit_amount_paid) + parseFloat(transaction_fee), 
             next_credit_date: next_credit_date,
             updated_by: sale_by,
             isdownpayment: isdownpayment
