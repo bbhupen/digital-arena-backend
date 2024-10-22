@@ -451,7 +451,7 @@ const createFinanceBill = async (payload) => {
         // Create cash and online record
         
         if (payment_mode_status == "1"){
-            cash_amount = payload["grand_total_bill"];
+            cash_amount = payload["downpayment_amt"];
         }
 
         if (payment_mode_status === "7"){
