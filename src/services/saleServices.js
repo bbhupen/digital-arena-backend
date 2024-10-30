@@ -5,7 +5,7 @@ const resCode = require("../helpers/responseCodes");
 
 const createSale = async (payload) => {
     try {
-        const mandateKeys = ["purchase_id", "model", "grand_total", "hsn_no", "sale_quantity", "unit_sale_value", "total_sale_value", "sale_by", "gst", "serial_no", "discount"];
+        const mandateKeys = ["purchase_id", "model", "grand_total", "hsn_no", "sale_quantity", "unit_sale_value", "total_sale_value", "sale_by", "gst", "discount"];
 
         if (!payload.length){
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters")
@@ -17,6 +17,10 @@ const createSale = async (payload) => {
             
             payload[i]["bill_no"] = "NULL";
             payload[i]["status"] = "2";
+
+            if (payload[i]["serial_no"].trim() === "") {
+                payload[i]["serial_no"] = "NA";
+            }
 
             if (!validation.valid) {
                 return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters")
