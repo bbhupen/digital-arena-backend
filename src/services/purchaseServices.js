@@ -29,13 +29,17 @@ const getPurchaseDetails = async (payload) => {
 
 const physicallyVerifyPurchase = async (payload) => {
     try {
-        const mandateKeys = ["purchase_id"];
+        const mandateKeys = ["purchase_id", "purchase_quantity"];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid){
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters")
         }
-        
+        const purchaseQuantity = parseInt(payload["purchase_quantity"]);
+        if (purchaseQuantity <= 0){
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "purchase_quantity should be greater than 0");
+        }
+
         const purchaseRecord = await getPurchaseByID(payload);
         if (!purchaseRecord){
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found");
