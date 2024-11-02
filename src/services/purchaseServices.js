@@ -45,6 +45,10 @@ const physicallyVerifyPurchase = async (payload) => {
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found");
         }
 
+        const { quantity, total_quantity_left  } = purchaseRecord;
+        payload["total_quantity_left_before_phy_ver"] = total_quantity_left;
+        payload["quantity_before_phy_ver"] = quantity;
+
         if (purchaseRecord['physically_verified_status'] == 1){
             return ApiResponse.response(resCode.RECORD_ALREADY_EXISTS, "success", "already verified");
         }
