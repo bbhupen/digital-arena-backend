@@ -14,8 +14,8 @@ const updatePurchaseLocationID = async (data) => {
 }
 
 const updatePurchasePhysicallyVerified = async (data) => {
-    const updatePurchaseQuery = `UPDATE ${purchaseTableName} SET physically_verified_status=1, quantity =?, total_quantity_left = ? WHERE purchase_id=?;`;
-    const updatePurchaseRes = await executeQuery(updatePurchaseQuery, [data["purchase_quantity"], data["purchase_quantity"], data["purchase_id"]]);
+    const updatePurchaseQuery = `UPDATE ${purchaseTableName} SET physically_verified_status=1, quantity =?, total_quantity_left = ?, quantity_before_phy_ver = ?, total_quantity_left_before_phy_ver = ? WHERE purchase_id=?;`;
+    const updatePurchaseRes = await executeQuery(updatePurchaseQuery, [data["purchase_quantity"], data["purchase_quantity"], data["quantity_before_phy_ver"], data["total_quantity_left_before_phy_ver"] ,data["purchase_id"]]);
     return updatePurchaseRes;
 }
 
