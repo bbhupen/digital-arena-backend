@@ -92,7 +92,7 @@ const manageNotification = async (payload) => {
                 if (updateNotificationRes == 'error'){
                     return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
                 }
-                return ApiResponse.response(resCode.RECORD_CREATED, "success", "record_found", expenditureRes);
+                return ApiResponse.response(resCode.RECORD_CREATED, "success", "record_found", [{}]);
 
             }
 
