@@ -1,5 +1,5 @@
-const { notificationTableName, locationTableName } = require("../helpers/constant");
-const { executeQuery } = require("../helpers/db-utils");
+const { notificationTableName, locationTableName, expenditureTableName } = require("../helpers/constant");
+const { executeQuery, executeInsertQuery } = require("../helpers/db-utils");
 
 const selectNotificationRecordUsingId = async (data) => {
     const notificationQuery = `SELECT * FROM ${notificationTableName} WHERE id = ?`;
@@ -35,13 +35,34 @@ const createNotificationRecord = async(keys,data) => {
     valuesPlaceholder = valuesPlaceholder.slice(0, -1);
 
     const insertQuery = `insert into ${notificationTableName} (${keys}) values(${valuesPlaceholder})`;
-    const createRecordResult = await executeQuery(insertQuery, data);
+    const createRecordResult = await executeInsertQuery(insertQuery, data, "notification", "id");
     return createRecordResult;
 }
+
+const selectExpenditureRecordUsingNotificationId = async (data) => {
+    const query = `SELECT * FROM ${expenditureTableName} WHERE notification_id = ?`;
+    const queryRes = await executeQuery(query, [data["notification_id"]]);
+    return queryRes;
+}
+
+const createExpenditureInNotification = async (keys,data) => {
+    let valuesPlaceholder = "";
+    for (let i = 0; i < data.length; i++) {
+        valuesPlaceholder += "?,";
+    }
+    valuesPlaceholder = valuesPlaceholder.slice(0, -1);
+
+    const insertQuery = `insert into ${expenditureTableName} (${keys}) values(${valuesPlaceholder})`;
+    const createRecordResult = await executeInsertQuery(insertQuery, data, "notification", "id");
+    return createRecordResult;
+}
+
 module.exports = {
     selectNotificationRecordUsingId,
     selectNotificationUsingLocationStatus,
     updateNotificationRecord,
     createNotificationRecord,
-    selectNotificationRecordUsingNotificationType
+    selectNotificationRecordUsingNotificationType,
+    createExpenditureInNotification,
+    selectExpenditureRecordUsingNotificationId
 };
