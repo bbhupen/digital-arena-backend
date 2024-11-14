@@ -11,7 +11,6 @@ const customerCreditHistTableName = "customer_credit_rec_hist";
 const financeBillTableName = "customer_finance";
 const cashAndOnlineTableName = "cash_and_online";
 const notificationTableName = "notification";
-const creditHistTableName = "customer_credit_rec_hist";
 const expenditureTableName = "expenditure";
 
 module.exports = {
@@ -28,6 +27,5 @@ module.exports = {
     financeBillTableName,
     cashAndOnlineTableName,
     notificationTableName,
-    creditHistTableName,
     expenditureTableName
 }
