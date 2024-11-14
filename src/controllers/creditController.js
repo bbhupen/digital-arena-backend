@@ -5,7 +5,7 @@ const { getUnpaidCredits, getCreditDetailUsingBillId, updateCredit } = require('
 const router = express.Router()
 
 
-router.get("/api/v1/credit/get", async (req, res) => {
+router.post("/api/v1/credit/get", async (req, res) => {
     const requestBody = req.body;
     const response = await getUnpaidCredits(requestBody);
 

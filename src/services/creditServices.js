@@ -6,7 +6,14 @@ const { createCustomerCreditHist } = require("../data_access/billRepo");
 
 const getUnpaidCredits = async (payload) => {
     try {
-        const customerCredits = await getCreditRecords();
+        const mandateKeys = ["start"];
+        const validation = await validatePayload(payload, mandateKeys);
+
+        if (!validation.valid){
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters",[])
+        }
+
+        const customerCredits = await getCreditRecords(payload);
 
         if (customerCredits == "error") {
             return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred", []);
