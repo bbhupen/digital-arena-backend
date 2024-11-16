@@ -177,6 +177,20 @@ const manageNotification = async (payload) => {
                 return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
             }
 
+            const cashAddedNotificationData = {
+                bill_id: bill_id,
+                notification_type: 6,
+                notify_by: "NA",
+                location_id: billRes[0]["location_id"],
+                remarks: "Cash Added " + bill_amount,
+                status: 1
+            }
+    
+            const notificationBillRes = await createNotificationRecord(Object.keys(cashAddedNotificationData).toString(), Object.values(cashAddedNotificationData));
+            if (notificationBillRes === "error") {
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating notification record");
+            }
+
             const updateNotificationRes = await updateNotificationRecord({status: 1, id: payload["notification_id"]});
             if (updateNotificationRes == 'error'){
                 return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")

@@ -1,5 +1,6 @@
 const express = require('express');
-const { getUnpaidCredits, getCreditDetailUsingBillId, updateCredit } = require('../services/creditServices');
+const { getUnpaidCredits, getCreditDetailUsingBillId, updateCredit, getCreditHistory } = require('../services/creditServices');
+const { getCreditHistDataUsingBillID } = require('../data_access/creditRepo');
 
 
 const router = express.Router()
@@ -27,7 +28,7 @@ router.post("/api/v1/credit/get-by-id", async (req, res) => {
 
 router.post("/api/v1/credit/get-credit-hist", async (req, res) => {
     const requestBody = req.body;
-    const response = await getCreditDetailUsingBillId(requestBody);
+    const response = await getCreditHistory(requestBody);
 
     if (!response || Object.keys(response).length === 0) {
         return res.status(404).json({ error: 'Unexpected error occurred' });

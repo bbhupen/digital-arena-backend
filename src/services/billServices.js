@@ -181,6 +181,20 @@ const createBill = async (payload) => {
                 return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
             }
 
+            const cashAddedNotificationData = {
+                bill_id: bill_id,
+                notification_type: 6,
+                notify_by: "NA",
+                location_id: location_id,
+                remarks: "Cash Added " + cash_amount,
+                status: 1
+            }
+    
+            const notificationBillRes = await createNotificationRecord(Object.keys(cashAddedNotificationData).toString(), Object.values(cashAddedNotificationData));
+            if (notificationBillRes === "error") {
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating notification record");
+            }
+
         }
         
         return ApiResponse.response(resCode.RECORD_CREATED, "success", "Record inserted", payload);
@@ -510,7 +524,22 @@ const createFinanceBill = async (payload) => {
         if (cashUpdateRes == 'error'){
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
         }
+
+        const cashAddedNotificationData = {
+            bill_id: bill_id,
+            notification_type: 6,
+            notify_by: "NA",
+            location_id: location_id,
+            remarks: "Cash Added " + cash_amount,
+            status: 1
+        }
+
+        const notificationBillRes = await createNotificationRecord(Object.keys(cashAddedNotificationData).toString(), Object.values(cashAddedNotificationData));
+        if (notificationBillRes === "error") {
+            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating notification record");
+        }
             
+
 
         const billCustomerData = (await searchCustomerUsingID({ customer_id }))[0];
         delete billCustomerData.customer_id;
