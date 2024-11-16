@@ -17,10 +17,10 @@ const getUnpaidCredits = async (payload) => {
 
         const customerCredits = await getCreditRecords(payload);
         if (customerCredits == "error") {
-            return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred", []);
+        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred", {});
         }
         if (customerCredits.length == 0) {
-            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);
+            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", {});
         }
 
         const totalCredits = await getTotalCreditRecords();
