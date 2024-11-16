@@ -14,6 +14,9 @@ const notificationRoute = require("./src/controllers/notificationController");
 const creditRoute = require("./src/controllers/creditController");
 
 const app = express();
+BigInt.prototype['toJSON'] = function () { 
+    return this.toString()
+}
 
 app.use(express.json())
 

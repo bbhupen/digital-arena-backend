@@ -3,7 +3,13 @@ const { executeQuery } = require("../helpers/db-utils");
 
 
 const getCreditRecords = async (data) => {
-    const query = `select bc.bill_id, bc.name, bc.phno, cr.total_credit_amt, credit_amount_left, status from ${billCustomerTableName} as bc, ${customerCreditTableName} as cr where cr.bill_id = bc.bill_id order by bc.inserted_at desc limit ${data["start"]},10;`
+    const query = `select bc.bill_id, bc.name, bc.phno, cr.total_credit_amt, credit_amount_left, status from ${billCustomerTableName} as bc, ${customerCreditTableName} as cr where cr.bill_id = bc.bill_id order by bc.inserted_at desc limit ${data["start"]},${data["limit"]};`
+    const queryRes = await executeQuery(query);
+    return queryRes;
+}
+
+const getTotalCreditRecords = async() => {
+    const query = `select count(*) as totalCount from ${billCustomerTableName} as bc, ${customerCreditTableName} as cr where cr.bill_id = bc.bill_id order by bc.inserted_at desc;`
     const queryRes = await executeQuery(query);
     return queryRes;
 }
@@ -30,5 +36,6 @@ module.exports = {
     getCreditRecords,
     getCreditRecordsUsingBillId,
     getCreditHistDataUsingBillID,
-    updateCreditRecord
+    updateCreditRecord,
+    getTotalCreditRecords
 };

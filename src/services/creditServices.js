@@ -1,12 +1,12 @@
 const ApiResponse = require("../helpers/apiresponse");
 const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
-const { getCreditRecords, getCreditRecordsUsingBillId, updateCreditRecord } = require("../data_access/creditRepo");
+const { getCreditRecords, getCreditRecordsUsingBillId, updateCreditRecord, getCreditHistDataUsingBillID, getTotalCreditRecords } = require("../data_access/creditRepo");
 const { createCustomerCreditHist } = require("../data_access/billRepo");
 
 const getUnpaidCredits = async (payload) => {
     try {
-        const mandateKeys = ["start"];
+        const mandateKeys = ["start", "limit"];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid){
@@ -14,15 +14,20 @@ const getUnpaidCredits = async (payload) => {
         }
 
         const customerCredits = await getCreditRecords(payload);
-
         if (customerCredits == "error") {
             return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred", []);
         }
-
         if (customerCredits.length == 0) {
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);
         }
-        return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", customerCredits);
+
+        const totalCredits = await getTotalCreditRecords();
+        const totalCreditCount = totalCredits[0]["totalCount"]
+        const res = {
+            totalRecords: totalCreditCount,
+            recordsFetched: customerCredits
+        }
+        return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", res);
     } catch (error) {
         console.log(error)
         return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
@@ -64,7 +69,7 @@ const getCreditHistory = async (payload) => {
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters",[])
         }
 
-        const creditHistory = await getCreditDetailUsingBillId(payload);
+        const creditHistory = await getCreditHistDataUsingBillID(payload);
         if (creditHistory == "error") {
             return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred", []);
         }
