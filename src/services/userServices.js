@@ -73,7 +73,7 @@ const loginService = async (payload) => {
         return ApiResponse.response(resCode.SUCCESS, "success", "auth successfull", res);
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }   
 
     

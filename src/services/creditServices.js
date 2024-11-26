@@ -17,7 +17,7 @@ const getUnpaidCredits = async (payload) => {
 
         const customerCredits = await getCreditRecords(payload);
         if (customerCredits == "error") {
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred", {});
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred", {});
         }
         if (customerCredits.length == 0) {
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", {});
@@ -32,7 +32,7 @@ const getUnpaidCredits = async (payload) => {
         return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", res);
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
 }
 
@@ -47,7 +47,7 @@ const getCreditDetailUsingBillId = async (payload) => {
 
         const creditDetails = await getCreditRecordsUsingBillId(payload);
         if (creditDetails == "error") {
-            return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred", []);
+            return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred", []);
         }
         if (creditDetails.length == 0) {
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);
@@ -58,7 +58,7 @@ const getCreditDetailUsingBillId = async (payload) => {
 
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
 }
 
@@ -73,7 +73,7 @@ const getCreditHistory = async (payload) => {
 
         const creditHistory = await getCreditHistDataUsingBillID(payload);
         if (creditHistory == "error") {
-            return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred", []);
+            return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred", []);
         }
         if (creditHistory.length == 0) {
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);
@@ -83,7 +83,7 @@ const getCreditHistory = async (payload) => {
     }
     catch(error){
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
 }
 
@@ -151,7 +151,7 @@ const updateCredit = async (payload) => {
 
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error");
     }
 }
 

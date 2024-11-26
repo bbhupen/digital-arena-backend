@@ -110,6 +110,16 @@ const getCashAndOnlineRecord = async (payload) => {
     return cashAndOnlineRecordResults;
 }
 
+const updateBillStatusRecord = async (payload) => {
+    let condition = ``;
+
+    payload.hasOwnProperty("status") ? condition += `status="${payload["status"]}",` : ``;
+
+    const updateQuery = `UPDATE ${billTableName} SET ${condition.slice(0, -1)} WHERE bill_id="${payload["bill_id"]}";`;
+    const updateRes = await executeQuery(updateQuery);
+    return updateRes;
+}
+
 // const insertRefreshToken = async (data) => {
 //     const usersQuery = `update ${userTableName} set refresh_token = ? WHERE username = ?`;
 //     const usersResults = await executeQuery(usersQuery, [data["refreshToken"], data["username"]]);
@@ -128,5 +138,6 @@ module.exports = {
     createCustomerCreditHist,
     createFinanceBillRecord,
     createCashAndOnlineRecord,
-    getCashAndOnlineRecord
+    getCashAndOnlineRecord,
+    updateBillStatusRecord
 };

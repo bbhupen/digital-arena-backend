@@ -21,7 +21,7 @@ const getPurchaseDetails = async (payload) => {
         return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", purchaseRecord);
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
 
 
@@ -62,7 +62,7 @@ const physicallyVerifyPurchase = async (payload) => {
         return ApiResponse.response(resCode.RECORD_MODIFIED, "success", "purchase verified", {});
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
 
 
@@ -97,7 +97,7 @@ const updatePurchaseLocation = async (payload) => {
 
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
 }
 

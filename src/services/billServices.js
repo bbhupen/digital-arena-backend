@@ -201,7 +201,7 @@ const createBill = async (payload) => {
 
     } catch (error) {
         console.error("Error in createBill:", error);
-        return ApiResponse.response(resCode.FAILED, "failure", "Unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "Unexpected error occurred");
     }
 }
 
@@ -229,7 +229,7 @@ const searchBillUsingCustomerId = async (payload) =>{
 
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
 }
 
@@ -390,7 +390,7 @@ const createCreditBill = async (payload) => {
 
     } catch (error) {
         console.error("Error in createBill:", error);
-        return ApiResponse.response(resCode.FAILED, "failure", "Unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "Unexpected error occurred");
     }
 }
 
@@ -560,7 +560,7 @@ const createFinanceBill = async (payload) => {
 
     } catch (error) {
         console.error("Error in createBill:", error);
-        return ApiResponse.response(resCode.FAILED, "failure", "Unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "Unexpected error occurred");
     }
 }
 
@@ -758,7 +758,7 @@ const createFinanceCreditBill = async (payload) => {
 
     } catch (error) {
         console.error("Error in createBill:", error);
-        return ApiResponse.response(resCode.FAILED, "failure", "Unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "Unexpected error occurred");
     }
 }
 

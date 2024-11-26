@@ -8,6 +8,12 @@ const getPurchasesFromSalesUsingNotification = async (payload) => {
     return queryRes;
 }
 
+const getAllPurchaseFromSales = async (payload) => {
+    const query = `select s.sales_id, s.bill_no, s.purchase_id, s.sale_quantity from notification as n, sales as s where n.bill_id = s.bill_no and n.id = ?;`
+    const queryRes = await executeQuery(query, [payload["notification_id"]]);
+    return queryRes;
+}
+
 const updateBillRecord = async (data) => {
     let condition = ``;
 
@@ -31,5 +37,6 @@ const updateSalesRecord = async (data) => {
 module.exports = {
     getPurchasesFromSalesUsingNotification,
     updateBillRecord,
-    updateSalesRecord
+    updateSalesRecord,
+    getAllPurchaseFromSales
 };

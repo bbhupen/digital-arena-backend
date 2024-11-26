@@ -39,7 +39,7 @@ const createSale = async (payload) => {
         return ApiResponse.response(resCode.RECORD_CREATED, "success", "record_inserted", createSaleRes);
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
     
 }
@@ -64,7 +64,7 @@ const searchSaleUsingBillNo = async (payload) =>{
 
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
 }
 

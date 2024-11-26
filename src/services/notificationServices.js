@@ -2,12 +2,13 @@ const ApiResponse = require("../helpers/apiresponse");
 const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
 const { selectNotificationUsingLocationStatus, selectNotificationRecordUsingNotificationType, updateNotificationRecord, selectNotificationRecordUsingId, selectExpenditureRecordUsingNotificationId } = require("../data_access/notificationRepo");
-const { getPurchasesFromSalesUsingNotification, updateBillRecord, updateSalesRecord } = require("../data_access/joinRepos");
+const { getPurchasesFromSalesUsingNotification, updateBillRecord, updateSalesRecord, getAllPurchaseFromSales } = require("../data_access/joinRepos");
 const { getBillRecordUsingBillId, getCashAndOnlineRecord } = require("../data_access/billRepo");
 const { addCashToLocation, subtractCashFromLocation } = require("../data_access/locationRepo");
 const { addPurchaseQuantity } = require("../data_access/purchaseRepo");
 const { getCreditHistDataUsingBill } = require("../data_access/creditHistRepo");
 const { getFinanceDataUsingBillId } = require("../data_access/financeRepo");
+const { disableSaleUsingSaleId } = require("../data_access/salesRepo");
 
 const getNotificationByNotificationType = async (payload) => {
     try {
@@ -26,7 +27,7 @@ const getNotificationByNotificationType = async (payload) => {
         return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", notificationRecord);
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
 }
 
@@ -261,16 +262,122 @@ const manageNotification = async (payload) => {
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters", [])
         }
         
-        return ApiResponse.response(resCode.RECORD_CREATED, "success", "record_found", purchasesFromSales);
+        return ApiResponse.response(resCode.RECORD_CREATED, "success", "success", purchasesFromSales);
 
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
+        
+    }
+}
+
+const manageReturnBill = async (payload) => {
+    try {
+        const mandateKeys = ["action_type", "notification_id"];
+        const validation = await validatePayload(payload, mandateKeys);
+        if (!validation.valid){
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters", [])
+        }
+
+        const notificationRes = await selectNotificationRecordUsingId({id: payload["notification_id"]});
+        if (notificationRes.length == 0){
+            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);
+        }
+        if (notificationRes == "error"){
+            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+        }
+        const notification_type = notificationRes[0]["notification_type"];
+
+        if (notification_type != 3){
+            return ApiResponse.response(resCode.FAILURE, "failure", "invalid notification type", []);
+        }
+
+        const returnBillId = notificationRes[0]["bill_id"];
+
+
+        if (payload["action_type"] == "1"){
+
+            // sales id from notificaition id
+            const purchasesFromSales = await getAllPurchaseFromSales(payload);
+            if (purchasesFromSales == 'error'){
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+            }
+            if (purchasesFromSales.length == 0){
+                return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);
+            }
+
+            /*
+            
+            The below code block updates the sales table and purchase table:
+
+
+            
+            * disable all the sales with id from purchasesFromSales
+            * loop thorugh the purchasesFromSales and disable the sales using the function disableSaleUsingSaleId and also add the sale quantity to purchaseTable
+            
+            
+            */
+
+
+            for (const purchase of purchasesFromSales) {
+                const disableSaleRes = await disableSaleUsingSaleId({ sales_id: purchase.sales_id });
+                if (disableSaleRes == 'error') {
+                    return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred");
+                }
+
+                const purchaseUpdateRes = await addPurchaseQuantity({purchase_id: purchase.purchase_id, sale_quantity: purchase.sale_quantity});
+                if (purchaseUpdateRes == 'error'){
+                    return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+                }
+            }
+
+            const billUpdateData = {
+                bill_id: returnBillId,
+                status: 0
+            }
+
+
+            /**
+             * The below code block updates the bill table:
+             * 
+             */
+
+
+            const updateNotificationRes = await updateNotificationRecord({status: 1, id: payload["notification_id"]});
+            if (updateNotificationRes == 'error'){
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+            }
+
+            /**
+             * The below code block updates the notification table:
+             * 
+             */
+
+            const billDisableRes = await updateBillRecord(billUpdateData);
+            if (billDisableRes == 'error'){
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+            }
+            // console.log(purchasesFromSales);
+            
+        }
+        else if (payload["action_type"] == "0"){
+            console.log(notificationRes);
+        }
+        console.log(notificationRes);
+        
+
+        return ApiResponse.response(resCode.RECORD_CREATED, "success", "success", []);
+
+
+    } catch (error) {
+        console.log(error)
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
         
     }
 }
 
 module.exports = {
     getNotificationByNotificationType,
-    manageNotification
+    manageNotification,
+    manageReturnBill
 };

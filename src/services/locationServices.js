@@ -15,7 +15,7 @@ const getAllLocation = async () => {
         return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", locationRecord);
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
     
 }
@@ -64,7 +64,7 @@ const collectAmountFromLocation = async (payload) => {
         return ApiResponse.response(resCode.RECORD_CREATED, "success", "record_created", payload);
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
 }
 
@@ -131,7 +131,7 @@ const createExpenditureRecord = async (payload) => {
 
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
 }
  

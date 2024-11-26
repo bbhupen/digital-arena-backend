@@ -28,15 +28,21 @@ const getSaleRecordUsingBillNo = async (payload) => {
 
 
 const updateSalesRecordinBill = async (data) => {
-
     const updateSalesQuery = `UPDATE ${saleTableName} SET bill_no = "${data["bill_no"]}", status = "${data["status"]}" WHERE sales_id=?;`;
     const updateSalesResult = await executeBulkUpdateQuery(updateSalesQuery, data['sales_id']);
     return updateSalesResult;
+}
 
+
+const disableSaleUsingSaleId = async (data) => {
+    const query = `UPDATE ${saleTableName} SET status = 0 WHERE sales_id = ?;`;
+    const queryRes = await executeQuery(query, [data["sales_id"]]);
+    return queryRes;
 }
 
 module.exports = {
     createSaleRecord,
     getSaleRecordUsingBillNo,
-    updateSalesRecordinBill
+    updateSalesRecordinBill,
+    disableSaleUsingSaleId
 }

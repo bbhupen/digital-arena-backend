@@ -76,7 +76,7 @@ const createCustomer = async (payload) => {
         return ApiResponse.response(resCode.RECORD_CREATED, "success", "record created", payload);
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
 }
 
@@ -102,7 +102,7 @@ const searchCustomer = async (payload) => {
         return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", res);
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");       
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");       
     }
 
 }
@@ -133,7 +133,7 @@ const searchCustomerWithPagination = async (payload) => {
         return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", res);   
     } catch (error) {
         console.log(error)
-        return ApiResponse.response(resCode.FAILED, "failure", "some unexpected error occurred");
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
 
         
