@@ -1,4 +1,4 @@
-const { customerCreditTableName, billCustomerTableName, customerCreditHistTableName } = require("../helpers/constant");
+const { customerCreditTableName, billCustomerTableName, customerCreditHistTableName, paymentModeStatusTableName, billTableName, locationTableName } = require("../helpers/constant");
 const { executeQuery } = require("../helpers/db-utils");
 
 
@@ -15,13 +15,13 @@ const getTotalCreditRecords = async() => {
 }
 
 const getCreditRecordsUsingBillId = async (payload) => {
-    const query = `select bc.bill_id, bc.name, bc.phno, cr.total_credit_amt, credit_amount_left, status from ${billCustomerTableName} as bc, ${customerCreditTableName} as cr where cr.bill_id = bc.bill_id and cr.bill_id = ? order by bc.inserted_at desc;`
+    const query = `select l.location_name, b.location_id, bc.bill_id, bc.name, bc.phno, cr.total_credit_amt, credit_amount_left, cr.status from ${billCustomerTableName} as bc, ${customerCreditTableName} as cr, ${billTableName} as b, ${locationTableName} as l where b.location_id = l.location_id and cr.bill_id = bc.bill_id and b.bill_id = cr.bill_id and cr.bill_id = ? order by bc.inserted_at desc;`
     const queryRes = await executeQuery(query, payload["bill_id"]);
     return queryRes;
 }
 
 const getCreditHistDataUsingBillID = async (payload) => {
-    const query = `select * from ${customerCreditHistTableName} where bill_id = ? order by inserted_date desc limit 1;`
+    const query = `select cch.cus_credit_rec_hist_id, cch.bill_id, cch.transaction_fee, cch.card_no_upi_id, cch.total_given, cch.grand_total, cch.next_credit_date, cch.isdownpayment, cch.updated_by, pms.payment_mode_name as payment_mode_status, cch.inserted_date from ${customerCreditHistTableName} as cch, ${paymentModeStatusTableName} as pms where cch.payment_mode_status = pms.payment_mode_id and cch.bill_id = ? order by inserted_date desc;`
     const queryRes = await executeQuery(query, [payload["bill_id"]]);
     return queryRes;
 }
@@ -32,10 +32,17 @@ const updateCreditRecord = async (data) => {
     return queryRes;
 }
 
+const updateCreditStatusRecord = async (data) => {
+    const query = `update ${customerCreditTableName} set status = ? where bill_id = ?`;
+    const queryRes = await executeQuery(query, [data["status"], data["bill_id"]]);
+    return queryRes;
+}
+
 module.exports = {
     getCreditRecords,
     getCreditRecordsUsingBillId,
     getCreditHistDataUsingBillID,
     updateCreditRecord,
-    getTotalCreditRecords
+    getTotalCreditRecords,
+    updateCreditStatusRecord
 };

@@ -1,14 +1,15 @@
 const ApiResponse = require("../helpers/apiresponse");
 const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
-const { selectNotificationUsingLocationStatus, selectNotificationRecordUsingNotificationType, updateNotificationRecord, selectNotificationRecordUsingId, selectExpenditureRecordUsingNotificationId } = require("../data_access/notificationRepo");
+const { selectNotificationUsingLocationStatus, selectNotificationRecordUsingNotificationType, updateNotificationRecord, selectNotificationRecordUsingId, selectExpenditureRecordUsingNotificationId, createNotificationRecord } = require("../data_access/notificationRepo");
 const { getPurchasesFromSalesUsingNotification, updateBillRecord, updateSalesRecord, getAllPurchaseFromSales } = require("../data_access/joinRepos");
-const { getBillRecordUsingBillId, getCashAndOnlineRecord } = require("../data_access/billRepo");
+const { getBillRecordUsingBillId, getCashAndOnlineRecord, getOriginalBillIDRecord } = require("../data_access/billRepo");
 const { addCashToLocation, subtractCashFromLocation } = require("../data_access/locationRepo");
 const { addPurchaseQuantity } = require("../data_access/purchaseRepo");
 const { getCreditHistDataUsingBill } = require("../data_access/creditHistRepo");
 const { getFinanceDataUsingBillId } = require("../data_access/financeRepo");
 const { disableSaleUsingSaleId } = require("../data_access/salesRepo");
+const { updateCreditStatusRecord } = require("../data_access/creditRepo");
 
 const getNotificationByNotificationType = async (payload) => {
     try {
@@ -292,10 +293,10 @@ const manageReturnBill = async (payload) => {
             return ApiResponse.response(resCode.FAILURE, "failure", "invalid notification type", []);
         }
 
-        const returnBillId = notificationRes[0]["bill_id"];
+        const return_bill_id = notificationRes[0]["bill_id"];
 
 
-        if (payload["action_type"] == "1"){
+        if (payload["action_type"] == "1"){ // accept
 
             // sales id from notificaition id
             const purchasesFromSales = await getAllPurchaseFromSales(payload);
@@ -332,7 +333,7 @@ const manageReturnBill = async (payload) => {
             }
 
             const billUpdateData = {
-                bill_id: returnBillId,
+                bill_id: return_bill_id,
                 status: 0
             }
 
@@ -360,12 +361,66 @@ const manageReturnBill = async (payload) => {
             // console.log(purchasesFromSales);
             
         }
-        else if (payload["action_type"] == "0"){
-            console.log(notificationRes);
-        }
-        console.log(notificationRes);
-        
+        else if (payload["action_type"] == "0")
+        { // reject
+            /**
+             * update customer credit status = 2 where originial bill id = bill id
+             * 
+             */
+            const billIDRes = await getOriginalBillIDRecord({return_bill_id: return_bill_id});
+            if (billIDRes == 'error'){
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+            }
+            if (billIDRes.length == 0){
+                return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);
+            }
 
+            const original_bill_id = (billIDRes[0].bill_id);
+            const original_bill_details = await getBillRecordUsingBillId({bill_id: original_bill_id});
+            if (original_bill_details == 'error'){
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+            }
+            if (original_bill_details.length == 0){
+                return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);
+            }
+            const payment_mode_status = original_bill_details[0].payment_mode_status;
+
+            /**
+             * if Payment mode is credit - update the status to 2
+             */
+            if (payment_mode_status == 6){ 
+                const updateCreditStatusData = {
+                    bill_id: original_bill_id,
+                    status: 2
+                }
+
+                const updateCreditStatusRes = await updateCreditStatusRecord(updateCreditStatusData);
+                if (updateCreditStatusRes == 'error'){
+                    return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+                }
+            }
+
+            const updateNotificationRes = await updateNotificationRecord({status: 1, id: payload["notification_id"]});
+            if (updateNotificationRes == 'error'){
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+            }
+
+            const billUpdateData = {
+                bill_id: return_bill_id,
+                status: 0
+            }
+            const billEnableRes = await updateBillRecord(billUpdateData);
+            if (billEnableRes == 'error'){
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+            }
+
+
+        }
+        else
+        {
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters", []);
+        }
+        
         return ApiResponse.response(resCode.RECORD_CREATED, "success", "success", []);
 
 
