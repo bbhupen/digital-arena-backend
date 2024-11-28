@@ -8,7 +8,7 @@ const { addCashToLocation, subtractCashFromLocation } = require("../data_access/
 const { addPurchaseQuantity } = require("../data_access/purchaseRepo");
 const { getCreditHistDataUsingBill } = require("../data_access/creditHistRepo");
 const { getFinanceDataUsingBillId } = require("../data_access/financeRepo");
-const { disableSaleUsingSaleId } = require("../data_access/salesRepo");
+const { disableSaleUsingSaleId, enableSaleUsingSaleId } = require("../data_access/salesRepo");
 const { updateCreditStatusRecord } = require("../data_access/creditRepo");
 
 const getNotificationByNotificationType = async (payload) => {
@@ -321,8 +321,8 @@ const manageReturnBill = async (payload) => {
 
 
             for (const purchase of purchasesFromSales) {
-                const disableSaleRes = await disableSaleUsingSaleId({ sales_id: purchase.sales_id });
-                if (disableSaleRes == 'error') {
+                const enableReturnSale = await enableSaleUsingSaleId({ sales_id: purchase.sales_id });
+                if (enableReturnSale == 'error') {
                     return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred");
                 }
 
@@ -385,13 +385,34 @@ const manageReturnBill = async (payload) => {
             }
             const payment_mode_status = original_bill_details[0].payment_mode_status;
 
+
             /**
-             * if Payment mode is credit - update the status to 2
+             * Disable return sales 
+            */
+            const purchasesFromSales = await getAllPurchaseFromSales(payload);
+            if (purchasesFromSales == 'error'){
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+            }
+            if (purchasesFromSales.length == 0){
+                return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);
+            }
+
+            for (const purchase of purchasesFromSales) {
+                const disableReturnSale = await disableSaleUsingSaleId({ sales_id: purchase.sales_id });
+                if (disableReturnSale == 'error') {
+                    return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred");
+                }
+            }
+
+
+
+            /**
+             * if payment mode credit, disable all the shitsss 
              */
             if (payment_mode_status == 6){ 
                 const updateCreditStatusData = {
                     bill_id: original_bill_id,
-                    status: 2
+                    status: 1
                 }
 
                 const updateCreditStatusRes = await updateCreditStatusRecord(updateCreditStatusData);
@@ -414,6 +435,20 @@ const manageReturnBill = async (payload) => {
                 return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
             }
 
+
+            /**
+             * 
+             * Update Return Bill status to 0
+             * 
+             */
+            const returnBillInfoData = {
+                bill_id: return_bill_id,
+                status: 0
+            }
+            const returnBillInfoRes = await updateBillRecord(returnBillInfoData);
+            if (returnBillInfoRes == 'error'){
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+            }
 
         }
         else

@@ -33,6 +33,11 @@ const updateSalesRecordinBill = async (data) => {
     return updateSalesResult;
 }
 
+const enableSaleUsingSaleId = async (data) => {
+    const query = `UPDATE ${saleTableName} SET status = 1 WHERE sales_id = ?;`;
+    const queryRes = await executeQuery(query, [data["sales_id"]]);
+    return queryRes;
+}
 
 const disableSaleUsingSaleId = async (data) => {
     const query = `UPDATE ${saleTableName} SET status = 0 WHERE sales_id = ?;`;
@@ -44,5 +49,6 @@ module.exports = {
     createSaleRecord,
     getSaleRecordUsingBillNo,
     updateSalesRecordinBill,
-    disableSaleUsingSaleId
+    disableSaleUsingSaleId,
+    enableSaleUsingSaleId
 }

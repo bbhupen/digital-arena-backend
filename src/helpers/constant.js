@@ -12,7 +12,7 @@ const financeBillTableName = "customer_finance";
 const cashAndOnlineTableName = "cash_and_online";
 const notificationTableName = "notification";
 const expenditureTableName = "expenditure";
-const returbBillInfoTableName  = "return_bill_info";
+const returnBillInfoTable  = "return_bill_info";
 const paymentModeStatusTableName = "payment_mode_status";
 
 module.exports = {
@@ -30,6 +30,6 @@ module.exports = {
     cashAndOnlineTableName,
     notificationTableName,
     expenditureTableName,
-    returbBillInfoTableName,
+    returnBillInfoTable,
     paymentModeStatusTableName
 }
