@@ -1,4 +1,4 @@
-const { billTableName, saleTableName } = require("../helpers/constant");
+const { billTableName, saleTableName, returnBillInfoTable } = require("../helpers/constant");
 const { executeQuery } = require("../helpers/db-utils");
 
 
@@ -24,6 +24,16 @@ const updateBillRecord = async (data) => {
     return updateRes;
 }
 
+const updateReturnBillRecord = async (data) => {
+    let condition = ``;
+
+    data.hasOwnProperty("status") ? condition += `status="${data["status"]}",` : ``;
+
+    const updateQuery = `UPDATE ${returnBillInfoTable} SET ${condition.slice(0, -1)} WHERE return_bill_id="${data["bill_id"]}";`;
+    const updateRes = await executeQuery(updateQuery);
+    return updateRes;
+}
+
 const updateSalesRecord = async (data) => {
     let condition = ``;
 
@@ -38,5 +48,6 @@ module.exports = {
     getPurchasesFromSalesUsingNotification,
     updateBillRecord,
     updateSalesRecord,
-    getAllPurchaseFromSales
+    getAllPurchaseFromSales,
+    updateReturnBillRecord
 };

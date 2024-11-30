@@ -2,7 +2,7 @@ const ApiResponse = require("../helpers/apiresponse");
 const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
 const { selectNotificationUsingLocationStatus, selectNotificationRecordUsingNotificationType, updateNotificationRecord, selectNotificationRecordUsingId, selectExpenditureRecordUsingNotificationId, createNotificationRecord } = require("../data_access/notificationRepo");
-const { getPurchasesFromSalesUsingNotification, updateBillRecord, updateSalesRecord, getAllPurchaseFromSales } = require("../data_access/joinRepos");
+const { getPurchasesFromSalesUsingNotification, updateBillRecord, updateSalesRecord, getAllPurchaseFromSales, updateReturnBillRecord } = require("../data_access/joinRepos");
 const { getBillRecordUsingBillId, getCashAndOnlineRecord, getOriginalBillIDRecord } = require("../data_access/billRepo");
 const { addCashToLocation, subtractCashFromLocation } = require("../data_access/locationRepo");
 const { addPurchaseQuantity } = require("../data_access/purchaseRepo");
@@ -334,7 +334,7 @@ const manageReturnBill = async (payload) => {
 
             const billUpdateData = {
                 bill_id: return_bill_id,
-                status: 0
+                status: 1
             }
 
 
@@ -426,14 +426,14 @@ const manageReturnBill = async (payload) => {
                 return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
             }
 
-            const billUpdateData = {
-                bill_id: return_bill_id,
-                status: 0
-            }
-            const billEnableRes = await updateBillRecord(billUpdateData);
-            if (billEnableRes == 'error'){
-                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
-            }
+            // const billUpdateData = {
+            //     bill_id: return_bill_id,
+            //     status: 0
+            // }
+            // const billEnableRes = await updateBillRecord(billUpdateData);
+            // if (billEnableRes == 'error'){
+            //     return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+            // }
 
 
             /**
@@ -441,11 +441,25 @@ const manageReturnBill = async (payload) => {
              * Update Return Bill status to 0
              * 
              */
+            const returnBillData = {
+                bill_id: return_bill_id,
+                status: 0
+            }
+            const returnBillRes = await updateBillRecord(returnBillData);
+            if (returnBillRes == 'error'){
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+            }
+
+            /**
+             * update return bill info to status 0
+             */
+
             const returnBillInfoData = {
                 bill_id: return_bill_id,
                 status: 0
             }
-            const returnBillInfoRes = await updateBillRecord(returnBillInfoData);
+
+            const returnBillInfoRes = await updateReturnBillRecord(returnBillInfoData);
             if (returnBillInfoRes == 'error'){
                 return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
             }
