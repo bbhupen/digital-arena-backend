@@ -96,6 +96,7 @@ const updateCredit = async (payload) => {
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters", [])
         }
 
+        var creditCompleted = false;
         const { bill_id, credit_amount_left, updated_by, location_id, grand_total } = payload;
 
 
@@ -116,6 +117,10 @@ const updateCredit = async (payload) => {
             "credit_amount_left": credit_amount_left
         }
 
+        if (parseFloat(credit_amount_left) == 0) { 
+            updateCreditData["status"] = 1;
+            creditCompleted = true;
+        }
         // add cash amount
         if (payload["payment_mode_status"] == "1"){
             const cash_amount = grand_total;
@@ -146,6 +151,10 @@ const updateCredit = async (payload) => {
         const updateCreditRes = await updateCreditRecord(updateCreditData);
         if (updateCreditRes === "error"){
             return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating customer credit history record", {});
+        }
+
+        if (creditCompleted){
+            return ApiResponse.response(resCode.RECORD_UPDATED, "success", "record_created", {});    
         }
         return ApiResponse.response(resCode.RECORD_CREATED, "success", "record_created", {});
 

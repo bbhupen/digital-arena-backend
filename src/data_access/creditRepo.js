@@ -27,9 +27,14 @@ const getCreditHistDataUsingBillID = async (payload) => {
 }
 
 const updateCreditRecord = async (data) => {
-    const query = `update ${customerCreditTableName} set credit_amount_left = ? where bill_id = ?`;
-    const queryRes = await executeQuery(query, [data["credit_amount_left"], data["bill_id"]]);
-    return queryRes;
+    let condition = ``;
+
+    data.hasOwnProperty("credit_amount_left") ? condition += `credit_amount_left="${data["credit_amount_left"]}",` : ``;
+    data.hasOwnProperty("status") ? condition += `status="${data["status"]}",` : ``;
+
+    const updateQuery = `UPDATE ${customerCreditTableName} SET ${condition.slice(0, -1)} WHERE bill_id="${data["bill_id"]}";`;
+    const updateRes = await executeQuery(updateQuery);
+    return updateRes;
 }
 
 const updateCreditStatusRecord = async (data) => {
