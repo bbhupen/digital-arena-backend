@@ -1,7 +1,7 @@
 const ApiResponse = require("../helpers/apiresponse");
 const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
-const { getCreditRecords, getCreditRecordsUsingBillId, updateCreditRecord, getCreditHistDataUsingBillID, getTotalCreditRecords, getCreditRecordsUsingPhoneNumber } = require("../data_access/creditRepo");
+const { getCreditRecords, getCreditRecordsUsingBillId, updateCreditRecord, getCreditHistDataUsingBillID, getTotalCreditRecords, getCreditRecordsUsingPhoneNumber, getTotalCreditRecordsUsingPhoneNumber, getUserUnpaidCreditRecords, getTotalUnpaidUserCreditCounts } = require("../data_access/creditRepo");
 const { createCustomerCreditHist } = require("../data_access/billRepo");
 const { addCashToLocation } = require("../data_access/locationRepo");
 const { createNotificationRecord } = require("../data_access/notificationRepo");
@@ -36,6 +36,49 @@ const getUnpaidCredits = async (payload) => {
     }
 }
 
+const getUserUnpaidCredits = async (payload) => {
+    try {
+        const mandateKeys = ["start", "limit"];
+        const validation = await validatePayload(payload, mandateKeys);
+
+        if (!validation.valid){
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters",[])
+        }
+
+        if (!payload.hasOwnProperty("name")) {
+            payload.name = "";
+        }
+
+        const customerCreditsPromise = getUserUnpaidCreditRecords(payload);
+        const totalCreditsPromise = getTotalUnpaidUserCreditCounts(payload);
+
+
+        const [customerCredits, totalCredits] = await Promise.all([
+            customerCreditsPromise,
+            totalCreditsPromise
+        ]);
+
+        if (customerCredits == "error") {
+            return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred", {});
+        }
+
+        if (customerCredits.length == 0) {
+            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", {});
+        }
+
+        const totalRecords = totalCredits[0]?.["totalCount"] || 0;
+        const res = {
+            totalRecords,
+            recordsFetched: customerCredits
+        }
+
+        return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", res);
+    } catch (error) {
+        console.log(error)
+        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
+    }
+}
+
 const getUnpaidCreditsByPhoneNumber = async (payload) => {
     try {
         const mandateKeys = ["phone_number", "start", "limit"];
@@ -45,16 +88,23 @@ const getUnpaidCreditsByPhoneNumber = async (payload) => {
             return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters",[])
         }
         
-        const customerCredits = await getCreditRecordsUsingPhoneNumber(payload);
+        const customerCreditsPromise = getCreditRecordsUsingPhoneNumber(payload);
+        const totalCreditsPromise = getTotalCreditRecordsUsingPhoneNumber(payload);
+
+        const [customerCredits, totalCredits] = await Promise.all([
+            customerCreditsPromise,
+            totalCreditsPromise
+        ]);
+
         if (customerCredits == "error") {
             return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred", {});
         }
         if (customerCredits.length == 0) {
             return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", {});
         }
-        // const totalCredits = await getTotalCreditRecords();
-        // const totalCreditCount = totalCredits[0]["totalCount"]
+        const totalRecords = totalCredits?.[0]?.totalCount || 0;
         const res = {
+            totalRecords,
             recordsFetched: customerCredits
         }
         return ApiResponse.response(resCode.RECORD_FOUND, "success", "record_found", res);
@@ -202,5 +252,6 @@ module.exports = {
     getCreditDetailUsingBillId,
     getCreditHistory,
     updateCredit,
-    getUnpaidCreditsByPhoneNumber
+    getUnpaidCreditsByPhoneNumber,
+    getUserUnpaidCredits
 }

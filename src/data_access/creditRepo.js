@@ -8,6 +8,18 @@ const getCreditRecords = async (data) => {
     return queryRes;
 }
 
+const getUserUnpaidCreditRecords = async (data) => {
+    const query = `select bc.bill_id, bc.name, bc.phno, cr.total_credit_amt, credit_amount_left, status from ${billCustomerTableName} as bc, ${customerCreditTableName} as cr where cr.bill_id = bc.bill_id and cr.status = 2 and bc.name like CONCAT('%', ?, '%') group by bc.phno order by bc.inserted_at desc limit ${data["start"]},${data["limit"]};`
+    const queryRes = await executeQuery(query, data['name']);
+    return queryRes;
+}
+
+const getTotalUnpaidUserCreditCounts = async (data) => {
+    const query = `SELECT COUNT(*) AS totalCount FROM (SELECT bc.phno FROM ${billCustomerTableName} AS bc JOIN ${customerCreditTableName} AS cr ON cr.bill_id = bc.bill_id WHERE cr.status = 2 AND bc.name LIKE CONCAT('%', ?, '%')GROUP BY bc.phno) AS unique_users;`
+    const queryRes = await executeQuery(query, data['name']);
+    return queryRes;
+}
+
 const getCreditRecordsUsingPhoneNumber = async (data) => {
     const query = `select bc.bill_id, bc.name, bc.phno, cr.total_credit_amt, credit_amount_left, status from ${billCustomerTableName} as bc, ${customerCreditTableName} as cr where cr.bill_id = bc.bill_id and cr.status = 2 and bc.phno = ? order by bc.inserted_at desc limit ${data["start"]},${data["limit"]};`
     const queryRes = await executeQuery(query, [data["phone_number"]]);
@@ -17,6 +29,12 @@ const getCreditRecordsUsingPhoneNumber = async (data) => {
 const getTotalCreditRecords = async() => {
     const query = `select count(*) as totalCount from ${billCustomerTableName} as bc, ${customerCreditTableName} as cr where cr.bill_id = bc.bill_id and cr.status = 2 order by bc.inserted_at desc;`
     const queryRes = await executeQuery(query);
+    return queryRes;
+}
+
+const getTotalCreditRecordsUsingPhoneNumber = async(data) => {
+    const query = `select count(*) as totalCount from ${billCustomerTableName} as bc, ${customerCreditTableName} as cr where cr.bill_id = bc.bill_id and cr.status = 2 and bc.phno = ?;`
+    const queryRes = await executeQuery(query, data["phone_number"]);
     return queryRes;
 }
 
@@ -56,5 +74,8 @@ module.exports = {
     updateCreditRecord,
     getTotalCreditRecords,
     updateCreditStatusRecord,
-    getCreditRecordsUsingPhoneNumber
+    getCreditRecordsUsingPhoneNumber,
+    getTotalCreditRecordsUsingPhoneNumber,
+    getUserUnpaidCreditRecords,
+    getTotalUnpaidUserCreditCounts
 };
