@@ -9,7 +9,7 @@ const getCreditRecords = async (data) => {
 }
 
 const getUserUnpaidCreditRecords = async (data) => {
-    const query = `select bc.bill_id, bc.name, bc.phno, cr.total_credit_amt, credit_amount_left, status from ${billCustomerTableName} as bc, ${customerCreditTableName} as cr where cr.bill_id = bc.bill_id and cr.status = 2 and bc.name like CONCAT('%', ?, '%') group by bc.phno order by bc.inserted_at desc limit ${data["start"]},${data["limit"]};`
+    const query = `SELECT bc.bill_id, bc.name, bc.phno, (SELECT SUM(cr2.credit_amount_left) FROM ${customerCreditTableName} cr2 JOIN ${billCustomerTableName} bc2 ON cr2.bill_id = bc2.bill_id WHERE bc2.phno = bc.phno AND cr2.status = 2) AS total_credit_amount_left FROM ${billCustomerTableName} AS bc JOIN ${customerCreditTableName} AS cr ON cr.bill_id = bc.bill_id WHERE cr.status = 2 AND bc.name LIKE CONCAT('%', ?, '%') GROUP BY bc.phno ORDER BY bc.inserted_at DESC LIMIT ${data["start"]}, ${data["limit"]};`;
     const queryRes = await executeQuery(query, data['name']);
     return queryRes;
 }
