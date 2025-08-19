@@ -3,6 +3,8 @@ const { toMD5, validatePayload, hashPassword } = require("../helpers/utils");
 const jwt = require('jsonwebtoken');
 const ApiResponse = require("../helpers/apiresponse");
 const resCode = require("../helpers/responseCodes");
+// const upload = require("../helpers/multer");
+const fs = require('fs');
 
 const secretKey = process.env.JWT_SECRET;
 
@@ -120,11 +122,52 @@ const refreshAccessToken = async (payload) => {
         return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");         
     }
 
-
-
 }
+
+const uploadImageService = async (file) => {
+  try {
+    if (!file) {
+      return ApiResponse.response( resCode.INVALID_PARAMETERS,"failure","No file uploaded");
+    }
+
+    // Validate file type
+    if (!file.mimetype.startsWith("image/")) {
+      // cleanup invalid file
+      fs.unlinkSync(file.path);
+      return ApiResponse.response(
+        resCode.INVALID_PARAMETERS,
+        "failure",
+        "Invalid file type. Only image files are allowed"
+      );
+    }
+    
+    const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1 MB
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+      // cleanup oversized file
+      fs.unlinkSync(file.path);
+      return ApiResponse.response(
+        resCode.INVALID_PARAMETERS,
+        "failure",
+        `File too large. Max allowed size is ${MAX_FILE_SIZE / (1024 * 1024)} MB`
+      );
+    }
+
+    return ApiResponse.response( resCode.SUCCESS, "success", "image uploaded",
+    {
+        filename: file.filename,
+        mimetype: file.mimetype,
+        size: file.size
+      }
+    );
+  } catch (error) {
+    console.error(error);
+    return ApiResponse.response( resCode.FAILURE, "failure","Unexpected error occurred");
+  }
+};
 
 module.exports = {
     loginService,
-    refreshAccessToken
+    refreshAccessToken,
+    uploadImageService
 };

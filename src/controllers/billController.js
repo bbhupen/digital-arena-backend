@@ -3,7 +3,6 @@ const { createBill, searchBillUsingCustomerId, createCreditBill, createFinanceBi
 
 const router = express.Router()
 
-
 router.post("/api/v1/bill/create", async (req, res) => {
   const requestBody = req.body;
   const response = await createBill(requestBody);

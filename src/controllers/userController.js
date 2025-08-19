@@ -1,5 +1,6 @@
 const express = require('express');
-const { loginService, refreshAccessToken } = require('../services/userServices');
+const { loginService, refreshAccessToken, uploadImage, uploadImageService } = require('../services/userServices');
+const upload = require('../helpers/multer');
 const router = express.Router()
 
 
@@ -27,6 +28,17 @@ router.post("/api/v1/user/refreshAccessToken", async (req, res) => {
 
 })
 
+router.post("/api/v1/user/uploadImage", upload.single("image"), async (req, res) => {
+    try {
+      const result = await uploadImageService(req.file, req.body);
+
+      return res.status(result.code === 200 ? 200 : 400).json(result);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ status: "failure", message: "Unexpected error occurred" });
+    }
+  }
+);
 
 
 module.exports = router;

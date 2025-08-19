@@ -19,7 +19,6 @@ const selectRefreshTokenUsingUsername = async (data) => {
     return usersResults;
 }
 
-
 const insertRefreshToken = async (data) => {
     const usersQuery = `update ${userTableName} set refresh_token = ? WHERE username = ?`;
     const usersResults = await executeQuery(usersQuery, [data["refreshToken"], data["username"]]);
