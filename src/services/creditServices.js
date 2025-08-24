@@ -190,6 +190,16 @@ const updateCredit = async (payload) => {
         let creditCompleted = false;
         const { bill_id, updated_by, location_id, total_given, transaction_fee, payment_mode_status } = payload;
 
+        if (updated_by.trim() !== "digital") {
+            return ApiResponse.response(
+            resCode.INVALID_PARAMETERS,
+            "failure",
+            "Unauthorized",
+            {}
+            );
+        }
+
+
         const totalGiven = parseFloat(total_given);
         const transactionFee = parseFloat(transaction_fee);
         if (totalGiven <= 0 || transactionFee < 0) {
@@ -202,11 +212,11 @@ const updateCredit = async (payload) => {
         }
 
         const grandTotal = totalGiven + transactionFee;
-        if (grandTotal <= totalGiven) {
+        if (grandTotal < totalGiven) {
             return ApiResponse.response(
                 resCode.INVALID_PARAMETERS,
                 "failure",
-                "Grand total cannot be less than or equal to total given",
+                "Grand total cannot be less than total given",
                 {}
             );
         }
