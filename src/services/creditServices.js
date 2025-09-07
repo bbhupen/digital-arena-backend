@@ -190,14 +190,15 @@ const updateCredit = async (payload) => {
         let creditCompleted = false;
         const { bill_id, updated_by, location_id, total_given, transaction_fee, payment_mode_status } = payload;
 
-        if (updated_by.trim() !== "digital") {
-            return ApiResponse.response(
-            resCode.INVALID_PARAMETERS,
-            "failure",
-            "Unauthorized",
-            {}
-            );
-        }
+        // turn off digital arena check for now
+        // if (updated_by.trim() !== "digital") {
+        //     return ApiResponse.response(
+        //     resCode.INVALID_PARAMETERS,
+        //     "failure",
+        //     "Unauthorized",
+        //     {}
+        //     );
+        // }
 
 
         const totalGiven = parseFloat(total_given);
