@@ -3,11 +3,12 @@ const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
 const { createBillRecord, getLatestBillId, getCurrentFinYear, getBillRecordUsingCustomerID, createCreditBillRecord, createCustomerCredit, createCustomerCreditHist, createFinanceBillRecord, createCashAndOnlineRecord, getLatestBillIdUsingFinancialYear } = require("../data_access/billRepo");
 const { updateSalesRecordinBill } = require("../data_access/salesRepo");
-const { updatePurchaseQuantity } = require("../data_access/purchaseRepo");
+const { updatePurchaseQuantity, getPurchaseByID } = require("../data_access/purchaseRepo");
 const { searchCustomerUsingID, createBillCustomerRecord } = require("../data_access/customerRepo");
 const { createNotificationRecord } = require("../data_access/notificationRepo");
 const { addCashToLocation } = require("../data_access/locationRepo");
 const { generateBillId } = require("../helpers/generateBillId");
+const { parse } = require("dotenv");
 
 const createBill = async (payload) => {
     try {
@@ -397,7 +398,7 @@ const createCreditBill = async (payload) => {
 const createFinanceBill = async (payload) => {
     try {
         // Validate payload
-        const mandateKeys = ["customer_id", "sales_id", "payment_mode_status", "card_no_upi_id", "financer_name", "location_id", "transaction_fee", "net_total", "grand_total_bill", "downpayment_amt", "dispersed_amt", "other_fee" ];
+        const mandateKeys = ["customer_id", "sales_id", "payment_mode_status", "card_no_upi_id", "financer_name", "location_id", "transaction_fee", "net_total", "grand_total_bill", "downpayment_amt", "dispersed_amt", "other_fee" , "kit_fee", "emi_term", "emi_amount", "emi_start_date", "financer_staff" ];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
@@ -416,13 +417,51 @@ const createFinanceBill = async (payload) => {
         const bill_id = generateBillId(current_fin_year[0].year, bill_sl_no);
         // bill id generation end
 
-        const { sales_id, purchase_id, sale_quantity, customer_id, card_no_upi_id, downpayment_amt, dispersed_amt, transaction_fee, other_fee ,financer_name, payment_mode_status, location_id } = payload;
+        /*
+
+        need to calculate net_total = (sum of all the grand_total_price) ✓
+        need to calculate transaction_fee = user_input ✓
+        need to calculate downpayment_amt = user_input + transaction_fee + other_fee + kit_fee ✓
+        need to calculate grand_total_bill = transaction_fee + other_fee + net_total ✓
+        need to calculate dispersed_amt = net_total - downpayment_amt ✓
+
+        */
+
+        const { sales_id, purchase_id, sale_quantity, customer_id, card_no_upi_id, transaction_fee, other_fee ,financer_name, payment_mode_status, location_id, financer_staff, emi_term, emi_amount, emi_start_date, kit_fee } = payload;
+        let net_total = 0;
+        let dispersed_amt = 0;
+        let downpayment_amt = 0;
         let cash_amt = "";
         let online_amt = "";
         let online_payment_mode = "";
 
         delete payload.transaction_fee;
         delete payload.payment_mode_status;
+        delete payload.financer_staff;
+        delete payload.emi_term;
+        delete payload.emi_amount;
+        delete payload.emi_start_date;
+        delete payload.kit_fee;
+
+        // calculate net total start
+        for (let i = 0; i < payload.purchase_id.length; i++) {
+            const purchaseDetails = await getPurchaseByID({purchase_id: payload.purchase_id[i]});
+            net_total += parseFloat((parseFloat(purchaseDetails.unit_value || 0) * parseFloat(payload.sale_quantity[i])).toFixed(2));
+        }
+        payload.net_total = parseFloat(net_total).toFixed(2);
+        // calculate net total end
+
+        // calculate grand total bill start
+        payload.grand_total_bill = parseFloat((parseFloat(payload.net_total) + parseFloat(other_fee)) + parseFloat(transaction_fee) + parseFloat(kit_fee)).toFixed(2);
+        // calculate grand total bill end
+
+        // caclulate dispersed amt start
+        dispersed_amt = parseFloat((parseFloat(net_total) - parseFloat(downpayment_amt))).toFixed(2);
+        // caclulate dispersed amt end
+
+        // caclulate downpayment amt start
+        payload.downpayment_amt = downpayment_amt = parseFloat(parseFloat(payload.downpayment_amt || 0) + parseFloat(transaction_fee) + parseFloat(other_fee) + parseFloat(kit_fee)).toFixed(2);
+        // caclulate downpayment amt end
 
         payload = {
             ...payload,
@@ -486,7 +525,12 @@ const createFinanceBill = async (payload) => {
             transaction_fee: transaction_fee,
             downpayment_amt: downpayment_amt,
             dispersed_amt: dispersed_amt,
-            other_fee: other_fee
+            other_fee: other_fee,
+            financer_staff: financer_staff,
+            emi_term: emi_term,
+            emi_amount: emi_amount,
+            emi_start_date: emi_start_date,
+            kit_fee: kit_fee
         };
 
         const financeBillRes = await createFinanceBillRecord(Object.keys(financeBillData).toString(), Object.values(financeBillData));
@@ -566,7 +610,7 @@ const createFinanceBill = async (payload) => {
 
 const createFinanceCreditBill = async (payload) => {
     try {
-        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "location_id",  "net_total", "downpayment_amt", "dispersed_amt", "card_no_upi_id", "other_fee", "total_credit_amt", "credit_amount_left", "payment_mode_status", "credit_amount_paid", "grand_total_credit_amount", "next_credit_date", "transaction_fee", "sale_by", "remarks" ];
+        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "location_id",  "net_total", "downpayment_amt", "dispersed_amt", "card_no_upi_id", "other_fee", "total_credit_amt", "credit_amount_left", "payment_mode_status", "credit_amount_paid", "grand_total_credit_amount", "next_credit_date", "transaction_fee", "sale_by", "remarks", "kit_fee", "emi_term", "emi_amount", "emi_start_date", "financer_staff" ];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
@@ -595,11 +639,61 @@ const createFinanceCreditBill = async (payload) => {
         create notification record
         */
 
+        /*
+        need to calculate net_total = (sum of all the grand_total_price) ✓
+        need to calculate other_fee = user_input ✓
+        need to calculate transaction_fee = user_input ✓
+        need to calculate downpayment_amt = user_input ✓
+        need to calculate credit_amount_paid = user_input ✓
+        need to calculate total_credit_amt = downpayment_amt + other_fee ✓
+        need to calculate grand_total_credit_amount = total_credit_amt + transaction_fee ✓
+        need to calculate credit_amount_left = total_credit_amt - credit_amount_paid ✓
+        need to calculate grand_total_bill = transaction_fee + other_fee + net_total ✓
+        need to calculate dispersed_amt = net_total - downpayment_amt ✓
+        */
+
         var isdownpayment = 1;
         const status = 2;
-        const { sales_id, purchase_id, sale_quantity, net_total, other_fee, financer_name, next_credit_date, downpayment_amt, location_id, sale_by, remarks, dispersed_amt, total_credit_amt, credit_amount_left, credit_amount_paid, customer_id } = payload;
-
+        const { sales_id, purchase_id, sale_quantity, other_fee, financer_name, next_credit_date, location_id, sale_by, remarks, credit_amount_paid, customer_id, kit_fee, emi_term, emi_amount, emi_start_date, financer_staff } = payload;
         var { payment_mode_status, transaction_fee, card_no_upi_id, grand_total_credit_amount } = payload;
+        let net_total = 0, total_credit_amt = 0, dispersed_amt = 0, downpayment_amt = 0, credit_amount_left = 0;
+
+
+        // calculate net total start
+        for (let i = 0; i < payload.purchase_id.length; i++) {
+            const purchaseDetails = await getPurchaseByID({purchase_id: payload.purchase_id[i]});
+            net_total += parseFloat((parseFloat(purchaseDetails.unit_value || 0) * parseFloat(payload.sale_quantity[i])).toFixed(2));
+        }
+        payload.net_total = parseFloat(net_total).toFixed(2);
+        // calculate net total end
+
+        // calculate total credit amt start
+        payload.total_credit_amt = total_credit_amt = parseFloat(parseFloat(downpayment_amt || 0) + parseFloat(other_fee) + parseFloat(kit_fee)).toFixed(2);
+        // total_credit_amt = downpayment_amt + other_fee
+
+        // calculate grand total credit amt start
+        payload.grand_total_credit_amount = parseFloat(parseFloat(total_credit_amt || 0) + parseFloat(transaction_fee)).toFixed(2);
+        // calculate grand total credit amt end
+
+        // calculate dispersed amt start
+        dispersed_amt = parseFloat((parseFloat(net_total) - parseFloat(downpayment_amt))).toFixed(2);
+        // calculate dispersed amt end
+
+        // calculate credit amount left start
+        payload.credit_amount_left = credit_amount_left = parseFloat((parseFloat(total_credit_amt) - parseFloat(credit_amount_paid))).toFixed(2);
+        // calculate credit amount left end
+
+        // calculate down payment amt start
+        payload.downpayment_amt = downpayment_amt = (parseFloat(downpayment_amt) + parseFloat(transaction_fee) + parseFloat(other_fee) + parseFloat(kit_fee)).toFixed(2);
+        // calculate down payment amt end
+
+
+        delete payload.financer_staff;
+        delete payload.emi_term;
+        delete payload.emi_amount;
+        delete payload.emi_start_date;
+        delete payload.kit_fee;
+
 
         if (credit_amount_paid == "0"){
             transaction_fee = 0;
@@ -613,7 +707,7 @@ const createFinanceCreditBill = async (payload) => {
             ...payload,
             bill_id,
             bill_sl_no,
-            grand_total_bill: parseFloat(net_total) + parseFloat(other_fee),
+            grand_total_bill: parseFloat(net_total) + parseFloat(other_fee) + parseFloat(transaction_fee),
             status: status,
             transaction_fee: 0,
             payment_mode_status: "5",
@@ -653,7 +747,12 @@ const createFinanceCreditBill = async (payload) => {
             transaction_fee: "0",
             downpayment_amt: downpayment_amt,
             dispersed_amt: dispersed_amt,
-            other_fee: other_fee
+            other_fee: other_fee,
+            financer_staff: financer_staff,
+            emi_term: emi_term,
+            emi_amount: emi_amount,
+            emi_start_date: emi_start_date,
+            kit_fee: kit_fee
         };
 
         const customerCreditData = { 
