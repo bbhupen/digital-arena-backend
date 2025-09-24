@@ -1,7 +1,7 @@
 const ApiResponse = require("../helpers/apiresponse");
 const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
-const { createBillRecord, getLatestBillId, getCurrentFinYear, getBillRecordUsingCustomerID, createCreditBillRecord, createCustomerCredit, createCustomerCreditHist, createFinanceBillRecord, createCashAndOnlineRecord, getLatestBillIdUsingFinancialYear } = require("../data_access/billRepo");
+const { createBillRecord, getLatestBillId, getCurrentFinYear, getBillRecordUsingCustomerID, createCreditBillRecord, createCustomerCredit, createCustomerCreditHist, createFinanceBillRecord, createCashAndOnlineRecord, getLatestBillIdUsingFinancialYear, getFinanceCompanyRecord, getFinanceCompanyStaffRecord } = require("../data_access/billRepo");
 const { updateSalesRecordinBill } = require("../data_access/salesRepo");
 const { updatePurchaseQuantity, getPurchaseByID } = require("../data_access/purchaseRepo");
 const { searchCustomerUsingID, createBillCustomerRecord } = require("../data_access/customerRepo");
@@ -861,10 +861,45 @@ const createFinanceCreditBill = async (payload) => {
     }
 }
 
+const getFinancerCompany = async () => {
+    try {
+        const financerList = await getFinanceCompanyRecord();
+        if (financerList === "error") {
+            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "failure", "Some unexpected error occurred");
+        }
+        return ApiResponse.response(resCode.SUCCESS, "success", "Financer names retrieved successfully", financerList);
+    } catch (error) {
+        console.error("Error retrieving financer name", error);
+        return ApiResponse.response(resCode.FAILURE, "failure", "Unexpected error occurred");
+    }
+}
+
+const getFinancerName = async (payload) => {
+    try {
+        const mandateKeys = ["financer_id"];
+        const validation = await validatePayload(payload, mandateKeys);
+        
+        if (!validation.valid) {
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters");
+        }
+        const financerList = await getFinanceCompanyStaffRecord(payload);
+
+        if (financerList === "error") {
+            return ApiResponse.response(resCode.RECORD_NOT_FOUND, "failure", "Some unexpected error occurred");
+        }
+        return ApiResponse.response(resCode.SUCCESS, "success", "Financer names retrieved successfully", financerList);
+    } catch (error) {
+        console.error("Error retrieving financer name", error);
+        return ApiResponse.response(resCode.FAILURE, "failure", "Unexpected error occurred");
+    }
+}
+
 module.exports = {
     createBill,
     searchBillUsingCustomerId,
     createCreditBill,
     createFinanceBill,
-    createFinanceCreditBill
+    createFinanceCreditBill,
+    getFinancerName,
+    getFinancerCompany
 };
