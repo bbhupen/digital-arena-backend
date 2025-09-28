@@ -229,7 +229,7 @@ const searchBillUsingCustomerId = async (payload) =>{
 
 
     } catch (error) {
-        console.log(error)
+        console.error(error)
         return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
 }
@@ -656,7 +656,8 @@ const createFinanceCreditBill = async (payload) => {
         const status = 2;
         const { sales_id, purchase_id, sale_quantity, other_fee, financer_name, next_credit_date, location_id, sale_by, remarks, credit_amount_paid, customer_id, kit_fee, emi_term, emi_amount, emi_start_date, financer_staff } = payload;
         var { payment_mode_status, transaction_fee, card_no_upi_id, grand_total_credit_amount } = payload;
-        let net_total = 0, total_credit_amt = 0, dispersed_amt = 0, downpayment_amt = 0, credit_amount_left = 0;
+        let net_total = 0, total_credit_amt = 0, dispersed_amt = 0, credit_amount_left = 0;
+        let { downpayment_amt } = payload;
 
 
         // calculate net total start
@@ -666,6 +667,10 @@ const createFinanceCreditBill = async (payload) => {
         }
         payload.net_total = parseFloat(net_total).toFixed(2);
         // calculate net total end
+
+        if (parseFloat(downpayment_amt) > parseFloat(net_total)){
+            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "Credit amount paid cannot be greater than downpayment amount");
+        }
 
         // calculate total credit amt start
         payload.total_credit_amt = total_credit_amt = parseFloat(parseFloat(downpayment_amt || 0) + parseFloat(other_fee) + parseFloat(kit_fee)).toFixed(2);
@@ -686,7 +691,6 @@ const createFinanceCreditBill = async (payload) => {
         // calculate down payment amt start
         payload.downpayment_amt = downpayment_amt = (parseFloat(downpayment_amt) + parseFloat(transaction_fee) + parseFloat(other_fee) + parseFloat(kit_fee)).toFixed(2);
         // calculate down payment amt end
-
 
         delete payload.financer_staff;
         delete payload.emi_term;
