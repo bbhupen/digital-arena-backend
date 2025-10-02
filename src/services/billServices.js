@@ -759,7 +759,7 @@ const createFinanceCreditBill = async (payload) => {
             card_no_upi_id: card_no_upi_id,
             transaction_fee: transaction_fee,
             total_given: credit_amount_paid, 
-            grand_total: parseFloat(credit_amount_paid) + parseFloat(transaction_fee), 
+            grand_total: grand_total_credit_amount, 
             next_credit_date: next_credit_date,
             updated_by: sale_by,
             isdownpayment: isdownpayment
