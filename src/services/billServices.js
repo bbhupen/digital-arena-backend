@@ -229,7 +229,7 @@ const searchBillUsingCustomerId = async (payload) =>{
 
 
     } catch (error) {
-        console.error(error)
+        console.error   (error)
         return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error occurred");
     }
 }
@@ -427,10 +427,7 @@ const createFinanceBill = async (payload) => {
 
         */
 
-        const { sales_id, purchase_id, sale_quantity, customer_id, card_no_upi_id, transaction_fee, other_fee ,financer_name, payment_mode_status, location_id, financer_staff, emi_term, emi_amount, emi_start_date, kit_fee } = payload;
-        let net_total = 0;
-        let dispersed_amt = 0;
-        let downpayment_amt = 0;
+        const { sales_id, purchase_id, sale_quantity, customer_id, card_no_upi_id, transaction_fee, other_fee ,financer_name, payment_mode_status, location_id, financer_staff, emi_term, emi_amount, emi_start_date, kit_fee, dispersed_amt, downpayment_amt } = payload;
         let cash_amt = "";
         let online_amt = "";
         let online_payment_mode = "";
@@ -443,24 +440,16 @@ const createFinanceBill = async (payload) => {
         delete payload.emi_start_date;
         delete payload.kit_fee;
 
-        // calculate net total start
-        for (let i = 0; i < payload.purchase_id.length; i++) {
-            const purchaseDetails = await getPurchaseByID({purchase_id: payload.purchase_id[i]});
-            net_total += parseFloat((parseFloat(purchaseDetails.unit_value || 0) * parseFloat(payload.sale_quantity[i])).toFixed(2));
-        }
-        payload.net_total = parseFloat(net_total).toFixed(2);
-        // calculate net total end
-
         // calculate grand total bill start
-        payload.grand_total_bill = parseFloat((parseFloat(payload.net_total) + parseFloat(other_fee)) + parseFloat(transaction_fee) + parseFloat(kit_fee)).toFixed(2);
+        // payload.grand_total_bill = parseFloat((parseFloat(payload.net_total) + parseFloat(other_fee)) + parseFloat(transaction_fee) + parseFloat(kit_fee)).toFixed(2);
         // calculate grand total bill end
 
         // caclulate dispersed amt start
-        dispersed_amt = parseFloat((parseFloat(net_total) - parseFloat(downpayment_amt))).toFixed(2);
+        // dispersed_amt = parseFloat((parseFloat(net_total) - parseFloat(downpayment_amt))).toFixed(2);
         // caclulate dispersed amt end
 
         // caclulate downpayment amt start
-        payload.downpayment_amt = downpayment_amt = parseFloat(parseFloat(payload.downpayment_amt || 0) + parseFloat(transaction_fee) + parseFloat(other_fee) + parseFloat(kit_fee)).toFixed(2);
+        // payload.downpayment_amt = downpayment_amt = parseFloat(parseFloat(payload.downpayment_amt || 0) + parseFloat(transaction_fee) + parseFloat(other_fee) + parseFloat(kit_fee)).toFixed(2);
         // caclulate downpayment amt end
 
         payload = {
@@ -654,42 +643,40 @@ const createFinanceCreditBill = async (payload) => {
 
         var isdownpayment = 1;
         const status = 2;
-        const { sales_id, purchase_id, sale_quantity, other_fee, financer_name, next_credit_date, location_id, sale_by, remarks, credit_amount_paid, customer_id, kit_fee, emi_term, emi_amount, emi_start_date, financer_staff } = payload;
-        var { payment_mode_status, transaction_fee, card_no_upi_id, grand_total_credit_amount } = payload;
-        let net_total = 0, total_credit_amt = 0, dispersed_amt = 0, credit_amount_left = 0;
-        let { downpayment_amt } = payload;
+        const { sales_id, purchase_id, sale_quantity, other_fee, financer_name, next_credit_date, location_id, sale_by, remarks, credit_amount_paid, customer_id, kit_fee, emi_term, emi_amount, emi_start_date, financer_staff, total_credit_amt, grand_total_credit_amount, dispersed_amt, credit_amount_left, downpayment_amt } = payload;
+        var { payment_mode_status, transaction_fee, card_no_upi_id } = payload;
 
 
         // calculate net total start
-        for (let i = 0; i < payload.purchase_id.length; i++) {
-            const purchaseDetails = await getPurchaseByID({purchase_id: payload.purchase_id[i]});
-            net_total += parseFloat((parseFloat(purchaseDetails.unit_value || 0) * parseFloat(payload.sale_quantity[i])).toFixed(2));
-        }
-        payload.net_total = parseFloat(net_total).toFixed(2);
+        // for (let i = 0; i < payload.purchase_id.length; i++) {
+        //     const purchaseDetails = await getPurchaseByID({purchase_id: payload.purchase_id[i]});
+        //     net_total += parseFloat((parseFloat(purchaseDetails.unit_value || 0) * parseFloat(payload.sale_quantity[i])).toFixed(2));
+        // }
+        // payload.net_total = parseFloat(net_total).toFixed(2);
         // calculate net total end
 
-        if (parseFloat(downpayment_amt) > parseFloat(net_total)){
-            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "Credit amount paid cannot be greater than downpayment amount");
-        }
+        // if (parseFloat(downpayment_amt) > parseFloat(net_total)){
+        //     return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "Credit amount paid cannot be greater than downpayment amount");
+        // }
 
         // calculate total credit amt start
-        payload.total_credit_amt = total_credit_amt = parseFloat(parseFloat(downpayment_amt || 0) + parseFloat(other_fee) + parseFloat(kit_fee)).toFixed(2);
+        // payload.total_credit_amt = total_credit_amt = parseFloat(parseFloat(downpayment_amt || 0) + parseFloat(other_fee) + parseFloat(kit_fee)).toFixed(2);
         // total_credit_amt = downpayment_amt + other_fee
 
         // calculate grand total credit amt start
-        payload.grand_total_credit_amount = parseFloat(parseFloat(total_credit_amt || 0) + parseFloat(transaction_fee)).toFixed(2);
+        // payload.grand_total_credit_amount = parseFloat(parseFloat(total_credit_amt || 0) + parseFloat(transaction_fee)).toFixed(2);
         // calculate grand total credit amt end
 
         // calculate dispersed amt start
-        dispersed_amt = parseFloat((parseFloat(net_total) - parseFloat(downpayment_amt))).toFixed(2);
+        // dispersed_amt = parseFloat((parseFloat(net_total) - parseFloat(downpayment_amt))).toFixed(2);
         // calculate dispersed amt end
 
         // calculate credit amount left start
-        payload.credit_amount_left = credit_amount_left = parseFloat((parseFloat(total_credit_amt) - parseFloat(credit_amount_paid))).toFixed(2);
+        // payload.credit_amount_left = credit_amount_left = parseFloat((parseFloat(total_credit_amt) - parseFloat(credit_amount_paid))).toFixed(2);
         // calculate credit amount left end
 
         // calculate down payment amt start
-        payload.downpayment_amt = downpayment_amt = (parseFloat(downpayment_amt) + parseFloat(transaction_fee) + parseFloat(other_fee) + parseFloat(kit_fee)).toFixed(2);
+        // payload.downpayment_amt = downpayment_amt = (parseFloat(downpayment_amt) + parseFloat(transaction_fee) + parseFloat(other_fee) + parseFloat(kit_fee)).toFixed(2);
         // calculate down payment amt end
 
         delete payload.financer_staff;
