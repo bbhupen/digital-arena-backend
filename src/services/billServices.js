@@ -698,7 +698,7 @@ const createFinanceCreditBill = async (payload) => {
             ...payload,
             bill_id,
             bill_sl_no,
-            grand_total_bill: parseFloat(net_total) + parseFloat(other_fee) + parseFloat(transaction_fee),
+            grand_total_bill: parseFloat(net_total) + parseFloat(other_fee) + parseFloat(transaction_fee) + parseFloat(kit_fee),
             status: status,
             transaction_fee: 0,
             payment_mode_status: "5",
