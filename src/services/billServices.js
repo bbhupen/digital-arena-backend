@@ -478,7 +478,7 @@ const createFinanceBill = async (payload) => {
         // Create cash and online record
         
         if (payment_mode_status == "1"){
-            cash_amount = parseFloat(payload["downpayment_amt"]) + parseFloat(transaction_fee) + parseFloat(other_fee);
+            cash_amount = parseFloat(payload["downpayment_amt"]) + parseFloat(transaction_fee) + parseFloat(other_fee) + parseFloat(kit_fee);
         }
 
         if (payment_mode_status === "7"){
