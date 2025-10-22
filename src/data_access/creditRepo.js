@@ -73,6 +73,17 @@ const updateCreditStatusRecord = async (data) => {
     return queryRes;
 }
 
+const updateCustomerCreditRecord = async (payload) => {
+    let condition = ``;
+
+    payload.hasOwnProperty("status") ? condition += `status="${payload["status"]}",` : ``;
+
+    const updateQuery = `UPDATE ${customerCreditTableName} SET ${condition.slice(0, -1)} WHERE bill_id="${payload["bill_id"]}";`;
+    const updateRes = await executeQuery(updateQuery);
+    return updateRes;
+}
+
+
 module.exports = {
     getCreditRecords,
     getCreditRecordsUsingBillId,
@@ -84,5 +95,6 @@ module.exports = {
     getTotalCreditRecordsUsingPhoneNumber,
     getUserUnpaidCreditRecords,
     getTotalUnpaidUserCreditCounts,
-    getCreditAmountLeftUsingBillId
+    getCreditAmountLeftUsingBillId,
+    updateCustomerCreditRecord
 };

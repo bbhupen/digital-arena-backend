@@ -9,7 +9,7 @@ const { addPurchaseQuantity } = require("../data_access/purchaseRepo");
 const { getCreditHistDataUsingBill } = require("../data_access/creditHistRepo");
 const { getFinanceDataUsingBillId } = require("../data_access/financeRepo");
 const { disableSaleUsingSaleId, enableSaleUsingSaleId } = require("../data_access/salesRepo");
-const { updateCreditStatusRecord } = require("../data_access/creditRepo");
+const { updateCreditStatusRecord, updateCustomerCreditRecord } = require("../data_access/creditRepo");
 
 const getNotificationByNotificationType = async (payload) => {
     try {
@@ -64,6 +64,7 @@ const manageNotification = async (payload) => {
             }
         }
 
+        bill_id = purchasesFromSales[0]["bill_no"];
         if (payload["action_type"] == "1"){ // accept notification
 
             // overide notification_type
@@ -149,7 +150,6 @@ const manageNotification = async (payload) => {
             }
 
             // update the bill datas
-
             const billUpdateData = {
                 bill_id: bill_id,
                 status: 1
@@ -217,7 +217,8 @@ const manageNotification = async (payload) => {
 
                 return ApiResponse.response(resCode.RECORD_CREATED, "success", "record_found", [{}]);
             }
-            
+
+            // disable bill id
             const billUpdateData = {
                 bill_id: bill_id,
                 status: 0
@@ -227,7 +228,7 @@ const manageNotification = async (payload) => {
                 return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
             }
 
-
+            // disable all the sales with id from purchasesFromSales
             purchasesFromSales.map(async purchase => {    
                 const salesUpdateData = {
                     purchase_id: purchase.purchase_id,
@@ -246,17 +247,24 @@ const manageNotification = async (payload) => {
                 }
             });
 
+            // update the notification status to 0
             const updateNotificationRes = await updateNotificationRecord({status: 0, id: payload["notification_id"]});
             if (updateNotificationRes == 'error'){
                 return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
             }
-
+            
+            // disable customer credit
+            const customerCreditRes = await updateCustomerCreditRecord({bill_id: bill_id, status: 0});
+            if (customerCreditRes == 'error'){
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+            }            
 
             // if notification type =  reject then update the status to 0
             // -- add the purchase quantity to the purchase table
             // -- bill table
             // -- sale table
             // -- notification table
+            // -- customer credit table
         }
         else
         {
