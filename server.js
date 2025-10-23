@@ -12,6 +12,7 @@ const locationRoute = require("./src/controllers/locationController");
 const billRoute = require("./src/controllers/billController");
 const notificationRoute = require("./src/controllers/notificationController");
 const creditRoute = require("./src/controllers/creditController");
+const imageRoute = require("./src/controllers/imageController");
 
 const app = express();
 BigInt.prototype['toJSON'] = function () { 
@@ -28,6 +29,7 @@ app.use("/", locationRoute);
 app.use("/", billRoute);
 app.use("/", notificationRoute);
 app.use("/", creditRoute);
+app.use("/", imageRoute);
 
 // Handle 404 - Not Found
 app.use((req, res, next) => {

@@ -4,7 +4,6 @@ const { getFinanceCompany } = require('../data_access/billRepo');
 
 const router = express.Router()
 
-
 router.post("/api/v1/bill/create", async (req, res) => {
   const requestBody = req.body;
   const response = await createBill(requestBody);

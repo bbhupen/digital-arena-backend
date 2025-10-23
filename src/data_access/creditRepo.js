@@ -21,7 +21,7 @@ const getTotalUnpaidUserCreditCounts = async (data) => {
 }
 
 const getCreditRecordsUsingPhoneNumber = async (data) => {
-    const query = `select bc.bill_id, bc.name, bc.phno, cr.total_credit_amt, credit_amount_left, status from ${billCustomerTableName} as bc, ${customerCreditTableName} as cr where cr.bill_id = bc.bill_id and cr.status = 2 and bc.phno = ? order by bc.inserted_at desc limit ${data["start"]},${data["limit"]};`
+    const query = `select bc.bill_id, bc.name, bc.phno, cr.total_credit_amt, cr.photo, credit_amount_left, status from ${billCustomerTableName} as bc, ${customerCreditTableName} as cr where cr.bill_id = bc.bill_id and cr.status = 2 and bc.phno = ? order by bc.inserted_at desc limit ${data["start"]},${data["limit"]};`
     const queryRes = await executeQuery(query, [data["phone_number"]]);
     return queryRes;
 }

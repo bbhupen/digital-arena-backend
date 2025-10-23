@@ -236,7 +236,7 @@ const searchBillUsingCustomerId = async (payload) =>{
 
 const createCreditBill = async (payload) => {
     try {
-        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "payment_mode_status", "location_id", "card_no_upi_id", "transaction_fee", "net_total", "grand_total_bill", "total_credit_amt", "credit_amount_left", "customer_credit_date", "grand_total_credit_amount", "sale_by", "credit_amount_paid" ];
+        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "payment_mode_status", "location_id", "card_no_upi_id", "transaction_fee", "net_total", "grand_total_bill", "total_credit_amt", "credit_amount_left", "customer_credit_date", "grand_total_credit_amount", "sale_by", "credit_amount_paid", "photo" ];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
@@ -257,7 +257,7 @@ const createCreditBill = async (payload) => {
         var bill_sl_no = parseInt(maxBillId[0]?.bill_sl_no || 0) + 1;
         const bill_id = generateBillId(current_fin_year[0].year, bill_sl_no);
 
-        const { sales_id, purchase_id, sale_quantity, customer_id, credit_amount_left, credit_amount_paid, customer_credit_date, grand_total_bill, location_id, sale_by, remarks } = payload;
+        const { sales_id, purchase_id, sale_quantity, customer_id, credit_amount_left, credit_amount_paid, customer_credit_date, grand_total_bill, location_id, sale_by, remarks, photo } = payload;
         var { payment_mode_status, transaction_fee, card_no_upi_id, grand_total_credit_amount } = payload;
         var isdownpayment = 1;
         delete payload.transaction_fee;
@@ -282,6 +282,7 @@ const createCreditBill = async (payload) => {
         };
 
         const billPayload = { ...payload };
+        delete billPayload.photo;
         delete billPayload.sales_id;
         delete billPayload.purchase_id;
         delete billPayload.sale_quantity;
@@ -303,7 +304,8 @@ const createCreditBill = async (payload) => {
             bill_id: bill_id, 
             status: 2, 
             total_credit_amt: grand_total_bill, 
-            credit_amount_left: credit_amount_left 
+            credit_amount_left: credit_amount_left,
+            photo: photo
         };
 
         const customerCreditHistoryData = { 
@@ -398,7 +400,7 @@ const createCreditBill = async (payload) => {
 const createFinanceBill = async (payload) => {
     try {
         // Validate payload
-        const mandateKeys = ["customer_id", "sales_id", "payment_mode_status", "card_no_upi_id", "financer_name", "location_id", "transaction_fee", "net_total", "grand_total_bill", "downpayment_amt", "dispersed_amt", "other_fee" , "kit_fee", "emi_term", "emi_amount", "emi_start_date", "financer_staff" ];
+        const mandateKeys = ["customer_id", "sales_id", "payment_mode_status", "card_no_upi_id", "financer_name", "location_id", "transaction_fee", "net_total", "grand_total_bill", "downpayment_amt", "dispersed_amt", "other_fee" , "kit_fee", "emi_term", "emi_amount", "emi_start_date", "financer_staff", "photo" ];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
@@ -599,7 +601,7 @@ const createFinanceBill = async (payload) => {
 
 const createFinanceCreditBill = async (payload) => {
     try {
-        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "location_id",  "net_total", "downpayment_amt", "dispersed_amt", "card_no_upi_id", "other_fee", "total_credit_amt", "credit_amount_left", "payment_mode_status", "credit_amount_paid", "grand_total_credit_amount", "next_credit_date", "transaction_fee", "sale_by", "remarks", "kit_fee", "emi_term", "emi_amount", "emi_start_date", "financer_staff" ];
+        const mandateKeys = ["customer_id", "purchase_id", "sales_id", "location_id",  "net_total", "downpayment_amt", "dispersed_amt", "card_no_upi_id", "other_fee", "total_credit_amt", "credit_amount_left", "payment_mode_status", "credit_amount_paid", "grand_total_credit_amount", "next_credit_date", "transaction_fee", "sale_by", "remarks", "kit_fee", "emi_term", "emi_amount", "emi_start_date", "financer_staff", "photo" ];
         const validation = await validatePayload(payload, mandateKeys);
 
         if (!validation.valid) {
@@ -643,7 +645,7 @@ const createFinanceCreditBill = async (payload) => {
 
         var isdownpayment = 1;
         const status = 2;
-        const { sales_id, purchase_id, sale_quantity, other_fee, financer_name, next_credit_date, location_id, sale_by, remarks, credit_amount_paid, customer_id, kit_fee, emi_term, emi_amount, emi_start_date, financer_staff, total_credit_amt, grand_total_credit_amount, dispersed_amt, credit_amount_left, downpayment_amt, net_total } = payload;
+        const { sales_id, purchase_id, sale_quantity, other_fee, financer_name, next_credit_date, location_id, sale_by, remarks, credit_amount_paid, customer_id, kit_fee, emi_term, emi_amount, emi_start_date, financer_staff, total_credit_amt, grand_total_credit_amount, dispersed_amt, credit_amount_left, downpayment_amt, net_total, photo } = payload;
         var { payment_mode_status, transaction_fee, card_no_upi_id } = payload;
 
 
@@ -706,6 +708,7 @@ const createFinanceCreditBill = async (payload) => {
         };
 
         const billPayload = { ...payload };
+        delete billPayload.photo;
         delete billPayload.sales_id;
         delete billPayload.purchase_id;
         delete billPayload.sale_quantity;
@@ -750,7 +753,8 @@ const createFinanceCreditBill = async (payload) => {
             bill_id: bill_id, 
             status: 2, 
             total_credit_amt: total_credit_amt, 
-            credit_amount_left: credit_amount_left
+            credit_amount_left: credit_amount_left,
+            photo: photo
         };
 
         const customerCreditHistoryData = { 
