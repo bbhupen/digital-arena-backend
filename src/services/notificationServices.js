@@ -62,9 +62,9 @@ const manageNotification = async (payload) => {
             if (purchasesFromSales.length == 0){
                 return ApiResponse.response(resCode.RECORD_NOT_FOUND, "success", "no_record_found", []);
             }
+            bill_id = purchasesFromSales[0]["bill_no"];
         }
 
-        bill_id = purchasesFromSales[0]["bill_no"];
         if (payload["action_type"] == "1"){ // accept notification
 
             // overide notification_type
