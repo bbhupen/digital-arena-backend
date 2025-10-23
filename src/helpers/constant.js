@@ -14,6 +14,8 @@ const notificationTableName = "notification";
 const expenditureTableName = "expenditure";
 const returnBillInfoTable  = "return_bill_info";
 const paymentModeStatusTableName = "payment_mode_status";
+const financeCompanyTableName = "financer_company";
+const financeStaffTableName = "financer_company_staff";
 
 module.exports = {
     userTableName,
@@ -31,5 +33,7 @@ module.exports = {
     notificationTableName,
     expenditureTableName,
     returnBillInfoTable,
-    paymentModeStatusTableName
+    paymentModeStatusTableName,
+    financeCompanyTableName,
+    financeStaffTableName
 }

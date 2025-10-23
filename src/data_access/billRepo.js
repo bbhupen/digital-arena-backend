@@ -1,4 +1,4 @@
-const { billTableName, finYearTableName, billCustomerTableName, customerCreditTableName, customerCreditHistTableName, financeBillTableName, cashAndOnlineTableName, returnBillInfoTable } = require("../helpers/constant");
+const { billTableName, finYearTableName, billCustomerTableName, customerCreditTableName, customerCreditHistTableName, financeBillTableName, cashAndOnlineTableName, returnBillInfoTable, financeCompanyTableName, financeStaffTableName } = require("../helpers/constant");
 const { executeQuery } = require("../helpers/db-utils");
 
 const getLatestBillId = async () => {
@@ -132,6 +132,18 @@ const updateReturnBillStatusRecord = async (payload) => {
     return updateRes;
 }
 
+const getFinanceCompanyRecord = async () => {
+    const companiesQuery = `SELECT financer_id, name FROM ${financeCompanyTableName} where status = 1;`;
+    const companiesResults = await executeQuery(companiesQuery);
+    return companiesResults;
+}
+
+const getFinanceCompanyStaffRecord = async (payload) => {
+    const staffQuery = `SELECT name FROM ${financeStaffTableName} where financer_id = ?;`;
+    const staffResults = await executeQuery(staffQuery, [payload["financer_id"]]);
+    return staffResults;
+}
+
 // const insertRefreshToken = async (data) => {
 //     const usersQuery = `update ${userTableName} set refresh_token = ? WHERE username = ?`;
 //     const usersResults = await executeQuery(usersQuery, [data["refreshToken"], data["username"]]);
@@ -153,5 +165,7 @@ module.exports = {
     getCashAndOnlineRecord,
     updateBillStatusRecord,
     getOriginalBillIDRecord,
-    updateReturnBillStatusRecord
+    updateReturnBillStatusRecord,
+    getFinanceCompanyRecord,
+    getFinanceCompanyStaffRecord
 };

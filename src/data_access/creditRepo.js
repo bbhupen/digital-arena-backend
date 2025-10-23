@@ -44,6 +44,12 @@ const getCreditRecordsUsingBillId = async (payload) => {
     return queryRes;
 }
 
+const getCreditAmountLeftUsingBillId = async (payload) => {
+    const query = `select credit_amount_left from ${customerCreditTableName} where bill_id = ?;`
+    const queryRes = await executeQuery(query, [payload["bill_id"]]);
+    return queryRes;
+}
+
 const getCreditHistDataUsingBillID = async (payload) => {
     const query = `select cch.cus_credit_rec_hist_id, cch.bill_id, cch.transaction_fee, cch.card_no_upi_id, cch.total_given, cch.grand_total, cch.next_credit_date, cch.isdownpayment, cch.updated_by, pms.payment_mode_name as payment_mode_status, cch.inserted_date from ${customerCreditHistTableName} as cch, ${paymentModeStatusTableName} as pms where cch.payment_mode_status = pms.payment_mode_id and cch.bill_id = ? order by inserted_date desc;`
     const queryRes = await executeQuery(query, [payload["bill_id"]]);
@@ -67,6 +73,17 @@ const updateCreditStatusRecord = async (data) => {
     return queryRes;
 }
 
+const updateCustomerCreditRecord = async (payload) => {
+    let condition = ``;
+
+    payload.hasOwnProperty("status") ? condition += `status="${payload["status"]}",` : ``;
+
+    const updateQuery = `UPDATE ${customerCreditTableName} SET ${condition.slice(0, -1)} WHERE bill_id="${payload["bill_id"]}";`;
+    const updateRes = await executeQuery(updateQuery);
+    return updateRes;
+}
+
+
 module.exports = {
     getCreditRecords,
     getCreditRecordsUsingBillId,
@@ -77,5 +94,7 @@ module.exports = {
     getCreditRecordsUsingPhoneNumber,
     getTotalCreditRecordsUsingPhoneNumber,
     getUserUnpaidCreditRecords,
-    getTotalUnpaidUserCreditCounts
+    getTotalUnpaidUserCreditCounts,
+    getCreditAmountLeftUsingBillId,
+    updateCustomerCreditRecord
 };

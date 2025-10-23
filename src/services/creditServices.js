@@ -1,10 +1,11 @@
 const ApiResponse = require("../helpers/apiresponse");
 const { validatePayload } = require("../helpers/utils");
 const resCode = require("../helpers/responseCodes");
-const { getCreditRecords, getCreditRecordsUsingBillId, updateCreditRecord, getCreditHistDataUsingBillID, getTotalCreditRecords, getCreditRecordsUsingPhoneNumber, getTotalCreditRecordsUsingPhoneNumber, getUserUnpaidCreditRecords, getTotalUnpaidUserCreditCounts } = require("../data_access/creditRepo");
+const { getCreditRecords, getCreditRecordsUsingBillId, updateCreditRecord, getCreditHistDataUsingBillID, getTotalCreditRecords, getCreditRecordsUsingPhoneNumber, getTotalCreditRecordsUsingPhoneNumber, getUserUnpaidCreditRecords, getTotalUnpaidUserCreditCounts, getCreditAmountLeftUsingBillId } = require("../data_access/creditRepo");
 const { createCustomerCreditHist } = require("../data_access/billRepo");
 const { addCashToLocation } = require("../data_access/locationRepo");
 const { createNotificationRecord } = require("../data_access/notificationRepo");
+const { parse } = require("dotenv");
 
 const getUnpaidCredits = async (payload) => {
     try {
@@ -170,79 +171,183 @@ const getCreditHistory = async (payload) => {
 
 const updateCredit = async (payload) => {
     try {
-        const mandateKeys = ["updated_by", "bill_id", "payment_mode_status", "transaction_fee", "total_given", "grand_total", "next_credit_date", "credit_amount_left", "location_id"]
+        const mandateKeys = [
+            "updated_by", "bill_id", "payment_mode_status",
+            "transaction_fee", "total_given", "grand_total",
+            "next_credit_date", "location_id"
+        ];
+
         const validation = await validatePayload(payload, mandateKeys);
         if (!validation.valid) {
-            return ApiResponse.response(resCode.INVALID_PARAMETERS, "failure", "req.body does not have valid parameters", [])
+            return ApiResponse.response(
+                resCode.INVALID_PARAMETERS,
+                "failure",
+                "req.body does not have valid parameters",
+                []
+            );
         }
 
-        var creditCompleted = false;
-        const { bill_id, credit_amount_left, updated_by, location_id, grand_total } = payload;
+        let creditCompleted = false;
+        const { bill_id, updated_by, location_id, total_given, transaction_fee, payment_mode_status } = payload;
+
+        // turn off digital arena check for now
+        // if (updated_by.trim() !== "digital") {
+        //     return ApiResponse.response(
+        //     resCode.INVALID_PARAMETERS,
+        //     "failure",
+        //     "Unauthorized",
+        //     {}
+        //     );
+        // }
 
 
-        payload["isdownpayment"] = 0;
-        delete payload.credit_amount_left;
-        delete payload.location_id;
+        const totalGiven = parseFloat(total_given);
+        const transactionFee = parseFloat(transaction_fee);
+        if (totalGiven <= 0 || transactionFee < 0) {
+            return ApiResponse.response(
+                resCode.INVALID_PARAMETERS,
+                "failure",
+                "Invalid total given or transaction fee",
+                {}
+            );
+        }
 
+        const grandTotal = totalGiven + transactionFee;
+        if (grandTotal < totalGiven) {
+            return ApiResponse.response(
+                resCode.INVALID_PARAMETERS,
+                "failure",
+                "Grand total cannot be less than total given",
+                {}
+            );
+        }
 
-        // create credit hist
-        const createCustomerCreditHistoryRes = await createCustomerCreditHist(Object.keys(payload).toString(), Object.values(payload))
-        if (createCustomerCreditHistoryRes === "error") {
-            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating customer credit history record", {});
+        // cleanup payload
+        const cleanPayload = {
+            ...payload,
+            isdownpayment: 0
+        };
+        delete cleanPayload.credit_amount_left;
+        delete cleanPayload.location_id;
+
+        // create credit history
+        const createHistoryRes = await createCustomerCreditHist(
+            Object.keys(cleanPayload).toString(),
+            Object.values(cleanPayload)
+        );
+        if (createHistoryRes === "error") {
+            return ApiResponse.response(
+                resCode.RECORD_NOT_CREATED,
+                "failure",
+                "Error creating customer credit history",
+                {}
+            );
+        }
+
+        // fetch credit amount left
+        const creditAmountLeftRes = await getCreditAmountLeftUsingBillId({ bill_id });
+        if (creditAmountLeftRes === "error" || creditAmountLeftRes.length === 0) {
+            return ApiResponse.response(
+                resCode.RECORD_NOT_FOUND,
+                "failure",
+                "No credit record found for the given bill ID",
+                {}
+            );
+        }
+
+        const creditAmountLeft = parseFloat(creditAmountLeftRes[0].credit_amount_left);
+        if (creditAmountLeft < totalGiven) {
+            return ApiResponse.response(
+                resCode.INVALID_PARAMETERS,
+                "failure",
+                "Total given amount exceeds credit amount left",
+                {}
+            );
+        }
+
+        // calculate new credit amount
+        const newCreditAmountLeft = creditAmountLeft - totalGiven;
+
+        const updateCreditData = {
+            bill_id,
+            credit_amount_left: newCreditAmountLeft,
+            ...(newCreditAmountLeft === 0 && { status: 1 })
+        };
+
+        if (newCreditAmountLeft === 0) creditCompleted = true;
+
+        // cash handling
+        if (payment_mode_status == "1") {
+            const locationUpdateData = {
+                location_id,
+                cash_amount: grandTotal
+            };
+
+            const cashUpdateRes = await addCashToLocation(locationUpdateData);
+            if (cashUpdateRes === "error") {
+                return ApiResponse.response(
+                    resCode.RECORD_NOT_CREATED,
+                    "failure",
+                    "Error updating cash amount"
+                );
+            }
+
+            const notificationBillRes = await createNotificationRecord(
+                Object.keys({
+                    bill_id,
+                    notification_type: 6,
+                    notify_by: "NA",
+                    location_id,
+                    remarks: `Cash Added ${grandTotal}`,
+                    status: 1
+                }).toString(),
+                Object.values({
+                    bill_id,
+                    notification_type: 6,
+                    notify_by: "NA",
+                    location_id,
+                    remarks: `Cash Added ${grandTotal}`,
+                    status: 1
+                })
+            );
+
+            if (notificationBillRes === "error") {
+                return ApiResponse.response(
+                    resCode.RECORD_NOT_CREATED,
+                    "failure",
+                    "Error creating notification record"
+                );
+            }
         }
 
         // update credit table
-        const updateCreditData = {
-            "bill_id": bill_id,
-            "credit_amount_left": credit_amount_left
-        }
-
-        if (parseFloat(credit_amount_left) == 0) { 
-            updateCreditData["status"] = 1;
-            creditCompleted = true;
-        }
-        // add cash amount
-        if (payload["payment_mode_status"] == "1"){
-            const cash_amount = grand_total;
-            const locationUpdateData = {
-                location_id: location_id,
-                cash_amount: cash_amount
-            }
-            const cashUpdateRes = await addCashToLocation(locationUpdateData);
-            if (cashUpdateRes == 'error'){
-                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
-            }
-
-            const cashAddedNotificationData = {
-                bill_id: bill_id,
-                notification_type: 6,
-                notify_by: "NA",
-                location_id: location_id,
-                remarks: "Cash Added " + cash_amount,
-                status: 1
-            }
-    
-            const notificationBillRes = await createNotificationRecord(Object.keys(cashAddedNotificationData).toString(), Object.values(cashAddedNotificationData));
-            if (notificationBillRes === "error") {
-                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating notification record");
-            }
-        }
-
         const updateCreditRes = await updateCreditRecord(updateCreditData);
-        if (updateCreditRes === "error"){
-            return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "Error occurred while creating customer credit history record", {});
+        if (updateCreditRes === "error") {
+            return ApiResponse.response(
+                resCode.RECORD_NOT_CREATED,
+                "failure",
+                "Error updating credit record",
+                {}
+            );
         }
 
-        if (creditCompleted){
-            return ApiResponse.response(resCode.RECORD_UPDATED, "success", "record_created", {});    
-        }
-        return ApiResponse.response(resCode.RECORD_CREATED, "success", "record_created", {});
+        return ApiResponse.response(
+            creditCompleted ? resCode.RECORD_UPDATED : resCode.RECORD_CREATED,
+            "success",
+            "record_created",
+            {}
+        );
 
     } catch (error) {
-        console.log(error)
-        return ApiResponse.response(resCode.FAILURE, "failure", "some unexpected error");
+        console.error(error);
+        return ApiResponse.response(
+            resCode.FAILURE,
+            "failure",
+            "Some unexpected error occurred"
+        );
     }
-}
+};
+
 
 
 
