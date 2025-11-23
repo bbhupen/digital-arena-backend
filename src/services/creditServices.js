@@ -50,6 +50,8 @@ const getUserUnpaidCredits = async (payload) => {
             payload.name = "";
         }
 
+        // get bill_id from notification table grouped by user notification status = 1
+        // get bill_id, name, phno, total_unpaid_credit of that userx
         const customerCreditsPromise = getUserUnpaidCreditRecords(payload);
         const totalCreditsPromise = getTotalUnpaidUserCreditCounts(payload);
 
