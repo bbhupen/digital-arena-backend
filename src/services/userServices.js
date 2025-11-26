@@ -141,7 +141,7 @@ const uploadImageService = async (file) => {
       );
     }
     
-    const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1 MB
+    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       // cleanup oversized file
