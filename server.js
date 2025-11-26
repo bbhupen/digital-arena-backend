@@ -21,6 +21,34 @@ BigInt.prototype['toJSON'] = function () {
 
 app.use(express.json())
 
+app.use((req, res, next) => {
+  console.log("----- Incoming Request -----");
+  console.log("Method:", req.method);
+  console.log("URL:", req.originalUrl);
+  console.log("Headers:", req.headers);
+  console.log("Body:", req.body);
+  console.log("----------------------------");
+  next();
+});
+
+
+app.use((req, res, next) => {
+  const oldSend = res.send;
+
+  res.send = function (data) {
+    console.log("----- Outgoing Response -----");
+    console.log("URL:", req.originalUrl);
+    console.log("Status:", res.statusCode);
+    console.log("Response Body:", data);
+    console.log("------------------------------");
+
+    return oldSend.apply(res, arguments);
+  };
+
+  next();
+});
+
+
 app.use("/", userRoute);
 app.use("/", customerRoute);
 app.use("/", purchaseRoute);
