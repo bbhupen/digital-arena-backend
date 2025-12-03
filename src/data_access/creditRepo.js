@@ -9,13 +9,13 @@ const getCreditRecords = async (data) => {
 }
 
 const getUserUnpaidCreditRecords = async (data) => {
-    const query = `SELECT bc.phno, bc.name, GROUP_CONCAT(DISTINCT n.bill_id ORDER BY n.bill_id) AS bill_ids, SUM(cr.credit_amount_left) AS total_credit_amount_left FROM ${billCustomerTableName} AS bc INNER JOIN ${customerCreditTableName} AS cr ON cr.bill_id = bc.bill_id INNER JOIN ${notificationTableName} AS n ON n.bill_id = cr.bill_id WHERE cr.status = 2 AND n.status = 1 AND n.notification_type = 2 AND bc.name LIKE CONCAT('%', ?, '%') GROUP BY bc.phno, bc.name ORDER BY MAX(bc.inserted_at) DESC LIMIT ${data["start"]},${data["limit"]};`;
+    const query = `SELECT bc.phno, bc.name, GROUP_CONCAT(DISTINCT n.bill_id ORDER BY n.bill_id) AS bill_ids, SUM(cr.credit_amount_left) AS total_credit_amount_left FROM ${billCustomerTableName} AS bc INNER JOIN ${customerCreditTableName} AS cr ON cr.bill_id = bc.bill_id INNER JOIN ${notificationTableName} AS n ON n.bill_id = cr.bill_id WHERE cr.status = 2 AND n.status = 1 AND n.notification_type = 2 GROUP BY bc.phno ORDER BY MAX(bc.inserted_at) DESC LIMIT ${data["start"]},${data["limit"]};`;
     const queryRes = await executeQuery(query, data['name']);
     return queryRes;
 }
 
 const getTotalUnpaidUserCreditCounts = async (data) => {
-    const query = `SELECT COUNT(*) AS totalCount FROM (SELECT bc.phno FROM ${billCustomerTableName} AS bc JOIN ${customerCreditTableName} AS cr ON cr.bill_id = bc.bill_id WHERE cr.status = 2 AND bc.name LIKE CONCAT('%', ?, '%')GROUP BY bc.phno) AS unique_users;`
+    const query = `SELECT COUNT(*) AS totalCount FROM (SELECT bc.phno FROM ${billCustomerTableName} AS bc JOIN ${customerCreditTableName} AS cr ON cr.bill_id = bc.bill_id WHERE cr.status = 2 AND bc.name LIKE CONCAT('%', ?, '%') GROUP BY bc.phno) AS unique_users;`
     const queryRes = await executeQuery(query, data['name']);
     return queryRes;
 }
