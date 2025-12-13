@@ -1,4 +1,4 @@
-const { notificationTableName, locationTableName, expenditureTableName } = require("../helpers/constant");
+const { notificationTableName, locationTableName, expenditureTableName, billTableName, saleTableName } = require("../helpers/constant");
 const { executeQuery, executeInsertQuery } = require("../helpers/db-utils");
 
 const selectNotificationRecordUsingId = async (data) => {
@@ -14,8 +14,11 @@ const selectNotificationUsingLocationStatus = async (data) => {
 }
 
 const selectNotificationRecordUsingNotificationType = async (data) => {
-    const notificationQuery = `SELECT l.location_name, n.id, n.bill_id, nt.name, n.remarks, n.notify_by  FROM ${notificationTableName} as n, ${locationTableName} as l, notification_type as nt WHERE n.notification_type = nt.id and n.location_id = l.location_id and n.notification_type = ? and n.status = 2 order by inserted_at desc`;
+    
+    const notificationQuery = `SELECT l.location_name,n.id AS notification_id,n.bill_id,nt.name AS notification_type_name,n.remarks,n.notify_by,b.net_total,b.grand_total_bill,GROUP_CONCAT(s.model ORDER BY s.sales_id SEPARATOR ', ') AS sale_products,GROUP_CONCAT(s.sale_quantity ORDER BY s.sales_id SEPARATOR ', ') AS sale_quantities,GROUP_CONCAT(s.total_sale_value ORDER BY s.sales_id SEPARATOR ', ') AS sale_amounts,COALESCE(SUM(s.total_sale_value),0) AS sale_grand_total FROM ${notificationTableName} n INNER JOIN ${locationTableName} l ON n.location_id=l.location_id INNER JOIN notification_type nt ON n.notification_type=nt.id INNER JOIN ${billTableName} b ON b.bill_id=n.bill_id LEFT JOIN ${saleTableName} s ON s.bill_no=b.bill_id AND s.status=1 WHERE n.notification_type=? AND n.status=2 GROUP BY n.id,n.bill_id,l.location_name,nt.name,n.remarks,n.notify_by,b.net_total,b.grand_total_bill ORDER BY n.inserted_at DESC`;
+
     const notificationResults = await executeQuery(notificationQuery, [data["notification_type"], data["location_id"]]);
+    console.log(notificationResults)
     return notificationResults; 
 }
 
