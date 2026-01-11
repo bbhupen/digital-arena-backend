@@ -1,4 +1,4 @@
-const { customerCreditTableName, billCustomerTableName, customerCreditHistTableName, paymentModeStatusTableName, billTableName, locationTableName } = require("../helpers/constant");
+const { customerCreditTableName, billCustomerTableName, customerCreditHistTableName, paymentModeStatusTableName, billTableName, locationTableName, notificationTableName } = require("../helpers/constant");
 const { executeQuery } = require("../helpers/db-utils");
 
 
@@ -9,19 +9,19 @@ const getCreditRecords = async (data) => {
 }
 
 const getUserUnpaidCreditRecords = async (data) => {
-    const query = `SELECT bc.bill_id, bc.name, bc.phno, (SELECT SUM(cr2.credit_amount_left) FROM ${customerCreditTableName} cr2 JOIN ${billCustomerTableName} bc2 ON cr2.bill_id = bc2.bill_id WHERE bc2.phno = bc.phno AND cr2.status = 2) AS total_credit_amount_left FROM ${billCustomerTableName} AS bc JOIN ${customerCreditTableName} AS cr ON cr.bill_id = bc.bill_id WHERE cr.status = 2 AND bc.name LIKE CONCAT('%', ?, '%') GROUP BY bc.phno ORDER BY bc.inserted_at DESC LIMIT ${data["start"]}, ${data["limit"]};`;
+    const query = `SELECT bc.phno, bc.name, GROUP_CONCAT(DISTINCT n.bill_id ORDER BY n.bill_id) AS bill_ids, SUM(cr.credit_amount_left) AS total_credit_amount_left FROM ${billCustomerTableName} AS bc INNER JOIN ${customerCreditTableName} AS cr ON cr.bill_id = bc.bill_id INNER JOIN ${notificationTableName} AS n ON n.bill_id = cr.bill_id WHERE cr.status = 2 AND n.status = 1 AND n.notification_type = 2 GROUP BY bc.phno ORDER BY MAX(bc.inserted_at) DESC LIMIT ${data["start"]},${data["limit"]};`;
     const queryRes = await executeQuery(query, data['name']);
     return queryRes;
 }
 
 const getTotalUnpaidUserCreditCounts = async (data) => {
-    const query = `SELECT COUNT(*) AS totalCount FROM (SELECT bc.phno FROM ${billCustomerTableName} AS bc JOIN ${customerCreditTableName} AS cr ON cr.bill_id = bc.bill_id WHERE cr.status = 2 AND bc.name LIKE CONCAT('%', ?, '%')GROUP BY bc.phno) AS unique_users;`
+    const query = `SELECT COUNT(*) AS totalCount FROM (SELECT bc.phno FROM ${billCustomerTableName} AS bc JOIN ${customerCreditTableName} AS cr ON cr.bill_id = bc.bill_id WHERE cr.status = 2 AND bc.name LIKE CONCAT('%', ?, '%') GROUP BY bc.phno) AS unique_users;`
     const queryRes = await executeQuery(query, data['name']);
     return queryRes;
 }
 
 const getCreditRecordsUsingPhoneNumber = async (data) => {
-    const query = `select bc.bill_id, bc.name, bc.phno, cr.total_credit_amt, cr.photo, credit_amount_left, status from ${billCustomerTableName} as bc, ${customerCreditTableName} as cr where cr.bill_id = bc.bill_id and cr.status = 2 and bc.phno = ? order by bc.inserted_at desc limit ${data["start"]},${data["limit"]};`
+      const query = `select bc.bill_id, bc.name, bc.phno, cr.total_credit_amt, credit_amount_left, cr.status, cr.photo from ${billCustomerTableName} as bc, ${customerCreditTableName} as cr, ${notificationTableName} as n where cr.bill_id = bc.bill_id and bc.bill_id = n.bill_id and n.status = 1 and n.notification_type = 2 and cr.status = 2 and bc.phno = ? order by bc.inserted_at desc limit ${data["start"]},${data["limit"]};`
     const queryRes = await executeQuery(query, [data["phone_number"]]);
     return queryRes;
 }

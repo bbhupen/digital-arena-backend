@@ -32,7 +32,7 @@ router.post("/api/v1/user/uploadImage", upload.single("image"), async (req, res)
     try {
       const result = await uploadImageService(req.file, req.body);
 
-      return res.status(result.code === 200 ? 200 : 400).json(result);
+      return res.status(result.status_code  === 1 ? 200 : 400).json(result);
     } catch (error) {
       console.error(error);
       res.status(500).json({ status: "failure", message: "Unexpected error occurred" });

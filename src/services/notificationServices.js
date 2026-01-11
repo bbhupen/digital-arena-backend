@@ -367,6 +367,20 @@ const manageReturnBill = async (payload) => {
                 return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
             }
             // console.log(purchasesFromSales);
+
+
+            /**
+             * update return bill info to status 1
+             */
+            const returnBillInfoData = {
+                bill_id: return_bill_id,
+                status: 1
+            }
+
+            const returnBillInfoRes = await updateReturnBillRecord(returnBillInfoData);
+            if (returnBillInfoRes == 'error'){
+                return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
+            }
             
         }
         else if (payload["action_type"] == "0")
@@ -429,7 +443,7 @@ const manageReturnBill = async (payload) => {
                 }
             }
 
-            const updateNotificationRes = await updateNotificationRecord({status: 1, id: payload["notification_id"]});
+            const updateNotificationRes = await updateNotificationRecord({status: 0, id: payload["notification_id"]});
             if (updateNotificationRes == 'error'){
                 return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
             }
