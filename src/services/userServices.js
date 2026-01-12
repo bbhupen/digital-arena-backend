@@ -44,7 +44,7 @@ const loginService = async (payload) => {
         }
 
         
-        const accessToken = jwt.sign({ username: username, role_id: user[0]['role_id'], location_id: user[0]['location'] }, secretKey, { expiresIn: '1h' });
+        const accessToken = jwt.sign({ username: username, role_id: user[0]['role_id'], location_id: user[0]['location'] }, secretKey, { expiresIn: '24h' });
         const savedToken = await selectRefreshTokenUsingUsername(payload);
 
         if (!savedToken.length){

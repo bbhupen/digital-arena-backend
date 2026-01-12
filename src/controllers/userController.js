@@ -1,6 +1,7 @@
 const express = require('express');
 const { loginService, refreshAccessToken, uploadImage, uploadImageService } = require('../services/userServices');
 const upload = require('../helpers/multer');
+const { verifyAccessToken } = require('../middleware/auth');
 const router = express.Router()
 
 
@@ -28,7 +29,7 @@ router.post("/api/v1/user/refreshAccessToken", async (req, res) => {
 
 })
 
-router.post("/api/v1/user/uploadImage", upload.single("image"), async (req, res) => {
+router.post("/api/v1/user/uploadImage", verifyAccessToken, upload.single("image"), async (req, res) => {
     try {
       const result = await uploadImageService(req.file, req.body);
 

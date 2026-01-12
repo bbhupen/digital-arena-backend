@@ -1,28 +1,28 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
+const AuthResponse = require("../helpers/authresponse");
 const secretKey = process.env.JWT_SECRET;
 
 const verifyAccessToken = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
+  const authHeader = req.headers.authorization;
 
-    if (!authHeader) {
-        return res.status(401).json({ error: 'Authorization header not found' });
+  if (!authHeader) return AuthResponse.noAuthHeader(res);
+
+  if (!authHeader.startsWith("Bearer "))
+    return AuthResponse.invalidFormat(res);
+
+  const token = authHeader.split(" ")[1];
+
+  jwt.verify(token, secretKey, (err, user) => {
+    if (err) {
+      if (err.name === "TokenExpiredError")
+        return AuthResponse.tokenExpired(res);
+
+      return AuthResponse.invalidToken(res);
     }
 
-    const token = authHeader.split(' ')[1];
-
-    if (!token) {
-        return res.status(401).json({ error: 'Access token not found' });
-    }
-
-    jwt.verify(token, secretKey, (err, user) => {
-        if (err) {
-            return res.status(403).json({ error: 'Invalid token' });
-        }
-        req.user = user;
-        next();
-    });
+    req.user = user;
+    next();
+  });
 };
 
-module.exports = {
-    verifyAccessToken
-};
+module.exports = { verifyAccessToken };

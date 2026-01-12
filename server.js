@@ -13,6 +13,7 @@ const billRoute = require("./src/controllers/billController");
 const notificationRoute = require("./src/controllers/notificationController");
 const creditRoute = require("./src/controllers/creditController");
 const imageRoute = require("./src/controllers/imageController");
+const { verifyAccessToken } = require('./src/middleware/auth');
 
 const app = express();
 BigInt.prototype['toJSON'] = function () { 
@@ -50,6 +51,9 @@ app.use((req, res, next) => {
 
 
 app.use("/", userRoute);
+
+app.use(verifyAccessToken);
+
 app.use("/", customerRoute);
 app.use("/", purchaseRoute);
 app.use("/", saleRoute);
