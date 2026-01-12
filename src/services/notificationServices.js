@@ -208,7 +208,7 @@ const manageNotification = async (payload) => {
         else if (payload["action_type"] == "0") // reject notification
         {
 
-            
+            // extra expense
             if (notification_type == "4"){
                 const updateNotificationRes = await updateNotificationRecord({status: 0, id: payload["notification_id"]});
                 if (updateNotificationRes == 'error'){
@@ -235,6 +235,8 @@ const manageNotification = async (payload) => {
                     bill_no: purchase.bill_no,
                     status: 0
                 };
+
+                // add purchase quantity back to purchase table
                 const purchaseUpdateRes = await addPurchaseQuantity({purchase_id: purchase.purchase_id, sale_quantity: purchase.sale_quantity});
                 if (purchaseUpdateRes == 'error'){
                     return ApiResponse.response(resCode.RECORD_NOT_CREATED, "failure", "some error occurred")
