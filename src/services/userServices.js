@@ -44,7 +44,7 @@ const loginService = async (payload) => {
         }
 
         
-        const accessToken = jwt.sign({ username: username, role_id: user[0]['role_id'], location_id: user[0]['location'] }, secretKey, { expiresIn: '1h' });
+        const accessToken = jwt.sign({ username: username, role_id: user[0]['role_id'], location_id: user[0]['location'] }, secretKey, { expiresIn: '24h' });
         const savedToken = await selectRefreshTokenUsingUsername(payload);
 
         if (!savedToken.length){
@@ -141,7 +141,7 @@ const uploadImageService = async (file) => {
       );
     }
     
-    const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1 MB
+    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2 MB
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       // cleanup oversized file

@@ -24,35 +24,50 @@ async function hashPassword(password) {
 }
 
 const validatePayload = async (payload, requiredFields) => {
-    const hasRequiredFields = requiredFields.every(prop => payload.hasOwnProperty(prop));
-    if (!hasRequiredFields) {
-        return { valid: false };
-    }
+    const missingFields = [];
+    const blankFields = [];
 
-    const hasNoBlankFields = requiredFields.every(prop => {
-        const value = payload[prop];
-    
-        if (typeof value === "string" && value.trim() === "") {
-            return false;
+    // Check for missing fields
+    requiredFields.forEach(prop => {
+        if (!payload.hasOwnProperty(prop)) {
+            missingFields.push(prop);
         }
-    
-        if (Array.isArray(value) && value.length === 0) {
-            return false;
-        }
-    
-        if (typeof value === "object" && value !== null && !Array.isArray(value) && Object.keys(value).length === 0) {
-            return false;
-        }
-    
-        return true;
     });
 
-    if (!hasNoBlankFields) {
-        return { valid: false };
+    // Check for blank fields
+    requiredFields.forEach(prop => {
+        if (!payload.hasOwnProperty(prop)) return; // skip missing ones
+        
+        const value = payload[prop];
+
+        if (typeof value === "string" && value.trim() === "") {
+            blankFields.push(prop);
+            return;
+        }
+
+        if (Array.isArray(value) && value.length === 0) {
+            blankFields.push(prop);
+            return;
+        }
+
+        if (typeof value === "object" && value !== null && !Array.isArray(value) && Object.keys(value).length === 0) {
+            blankFields.push(prop);
+            return;
+        }
+    });
+
+    if (missingFields.length > 0 || blankFields.length > 0) {
+        console.log({ missingFields, blankFields });
+        return {
+            valid: false,
+            missingFields,
+            blankFields
+        };
     }
 
     return { valid: true };
-}
+};
+
 
 module.exports = {
     getTimestamp,
